@@ -152,6 +152,17 @@ button{font-family:inherit;cursor:pointer;}
 .chip .t{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;}
 .chip .p{font-weight:700;margin-top:1px;}
 .chip .d{color:var(--ink-muted);font-size:10.5px;}
+.chip.allday{border-left-style:dashed;border-left-width:4px;}
+.chip.allday .t{display:flex;align-items:center;gap:5px;}
+.chip.allday .t .badge-allday{
+  background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;
+  padding:1px 5px;border-radius:4px;letter-spacing:.02em;
+}
+.toggle-row{
+  display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
+  cursor:pointer;margin-bottom:2px;
+}
+.toggle-row input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;}
 
 .empty-board{padding:48px 20px;text-align:center;color:var(--ink-muted);font-size:13.5px;}
 .empty-board b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px;font-family:'Zen Kaku Gothic New',sans-serif;}
@@ -360,12 +371,22 @@ textarea{resize:vertical;min-height:56px;}
       <select id="fVehicle"></select>
     </div>
     <div class="field-row">
-      <div class="field">
-        <label>日付</label>
-        <input type="date" id="fDate">
-      </div>
+      <label class="toggle-row">
+        <input type="checkbox" id="fAllDay">
+        終日（複数日）予約にする
+      </label>
     </div>
     <div class="field-row">
+      <div class="field">
+        <label id="fDateLabel">日付</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field" id="fEndDateField" style="display:none;">
+        <label>終了日</label>
+        <input type="date" id="fEndDate">
+      </div>
+    </div>
+    <div class="field-row" id="fTimeRow">
       <div class="field">
         <label>開始時刻</label>
         <input type="time" id="fStart">
@@ -484,6 +505,7 @@ function fmtISO(d){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 function addDays(d,n){ const nd=new Date(d); nd.setDate(nd.getDate()+n); return nd; }
+function fmtMD(iso){ const d=new Date(iso+'T00:00:00'); return (d.getMonth()+1)+'/'+d.getDate(); }
 function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2)); }
 function vehicleById(id){ return state.vehicles.find(v=>v.id===id); }
 function showToast(msg){
@@ -546,11 +568,22 @@ async function saveReservations(){
   }catch(e){ showToast('保存に失敗しました。もう一度お試しください。'); }
 }
 
-function findConflict(vehicleId, date, start, end, excludeId){
-  return state.reservations.find(r=>
-    r.id!==excludeId && r.vehicleId===vehicleId && r.date===date &&
-    start < r.end && end > r.start
-  );
+function findConflict(vehicleId, date, endDate, allDay, start, end, excludeId){
+  const newEnd = endDate || date;
+  const newSpansDays = allDay || newEnd !== date;
+  return state.reservations.find(r=>{
+    if(r.id===excludeId || r.vehicleId!==vehicleId) return false;
+    const rEnd = r.endDate || r.date;
+    // 日付レンジが重なっていなければ無関係
+    if(newEnd < r.date || date > rEnd) return false;
+    const rSpansDays = r.allDay || rEnd !== r.date;
+    if(newSpansDays || rSpansDays){
+      // どちらかが終日・複数日にまたがる予約の場合、日付が重なった時点で衝突とみなす
+      return true;
+    }
+    // どちらも同日の時間指定予約の場合のみ、時間の重なりで判定
+    return date===r.date && start < r.end && end > r.start;
+  });
 }
 
 /* ---------------- render board ---------------- */
@@ -585,19 +618,23 @@ function renderMobileList(){
 
     const body = document.createElement('div');
     body.className='day-card-body';
-    const items = state.reservations.filter(r=>r.date===iso)
-      .sort((a,b)=> a.start.localeCompare(b.start));
+    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date))
+      .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
     if(items.length===0){
       body.innerHTML = '<div class="mrow-empty">予約なし</div>';
     }else{
       items.forEach(r=>{
         const veh = vehicleById(r.vehicleId);
+        const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
+        const timeLabel = isMulti
+          ? '終日'+(r.endDate && r.endDate!==r.date ? '（'+fmtMD(r.date)+'〜'+fmtMD(r.endDate)+'）':'')
+          : r.start+'–'+r.end;
         const row = document.createElement('div');
         row.className='mrow';
         row.innerHTML =
           '<span class="mrow-dot" style="background:'+(veh?veh.color:'#999')+'"></span>'+
           '<div class="mrow-main">'+
-            '<div class="mrow-time">'+r.start+'–'+r.end+'</div>'+
+            '<div class="mrow-time">'+timeLabel+'</div>'+
             '<div class="mrow-veh">'+escapeHtml(veh?veh.name:'（不明な車両）')+'</div>'+
             '<div class="mrow-purpose">'+escapeHtml(r.purpose||'（目的未入力）')+' ・ '+escapeHtml(r.driver)+'</div>'+
             '<div class="mrow-tags">'+
@@ -662,15 +699,19 @@ function renderBoard(){
       dc.appendChild(addBtn);
       dc.onclick = ()=> openReservationModal(null,{vehicleId:veh.id,date:iso});
 
-      const items = state.reservations.filter(r=>r.vehicleId===veh.id && r.date===iso)
-        .sort((a,b)=> a.start.localeCompare(b.start));
+      const items = state.reservations.filter(r=>r.vehicleId===veh.id && iso>=r.date && iso<=(r.endDate||r.date))
+        .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
       items.forEach(r=>{
+        const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
         const chip = document.createElement('div');
-        chip.className='chip';
+        chip.className = 'chip' + (isMulti ? ' allday' : '');
         chip.style.borderLeftColor = veh.color;
         chip.style.background = veh.color+'15';
+        const timeLabel = isMulti
+          ? '<span class="badge-allday">終日</span>'+(r.date!==r.endDate ? (r.date===iso?'開始':(r.endDate===iso?'終了':'継続')) : '')
+          : r.start+'–'+r.end;
         chip.innerHTML =
-          '<div class="t">'+r.start+'–'+r.end+'</div>'+
+          '<div class="t">'+timeLabel+'</div>'+
           '<div class="p">'+escapeHtml(r.purpose||'（目的未入力）')+'</div>'+
           '<div class="d">'+escapeHtml(r.driver)+(r.dept?' ・ '+escapeHtml(r.dept):'')+(r.parking?' ・ 駐車:'+escapeHtml(r.parking):'')+'</div>';
         chip.onclick = (e)=>{ e.stopPropagation(); openReservationModal(r); };
@@ -685,8 +726,12 @@ function renderUpcoming(){
   const nowISO = fmtISO(new Date());
   const nowHM = new Date().toTimeString().slice(0,5);
   const upcoming = state.reservations
-    .filter(r => r.date > nowISO || (r.date===nowISO && r.end >= nowHM))
-    .sort((a,b)=> (a.date+a.start).localeCompare(b.date+b.start))
+    .filter(r=>{
+      const effEnd = r.endDate || r.date;
+      const effEndHM = r.allDay ? '23:59' : r.end;
+      return effEnd > nowISO || (effEnd===nowISO && effEndHM >= nowHM);
+    })
+    .sort((a,b)=> (a.date+(a.allDay?'00:00':a.start)).localeCompare(b.date+(b.allDay?'00:00':b.start)))
     .slice(0,8);
 
   if(upcoming.length===0){
@@ -696,7 +741,10 @@ function renderUpcoming(){
   el.innerHTML = upcoming.map(r=>{
     const veh = vehicleById(r.vehicleId);
     const d = new Date(r.date+'T00:00:00');
-    const when = (d.getMonth()+1)+'/'+d.getDate()+'('+WD[(d.getDay()+6)%7]+') '+r.start+'–'+r.end;
+    const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
+    const when = isMulti
+      ? (d.getMonth()+1)+'/'+d.getDate()+'('+WD[(d.getDay()+6)%7]+') 終日'+(r.endDate && r.endDate!==r.date ? '〜'+fmtMD(r.endDate) : '')
+      : (d.getMonth()+1)+'/'+d.getDate()+'('+WD[(d.getDay()+6)%7]+') '+r.start+'–'+r.end;
     return '<div class="up-row">'+
       '<span class="up-dot" style="background:'+(veh?veh.color:'#999')+'"></span>'+
       '<span class="up-when">'+when+'</span>'+
@@ -715,6 +763,18 @@ function refreshVehicleSelect(){
   const sel = document.getElementById('fVehicle');
   sel.innerHTML = state.vehicles.map(v=>'<option value="'+v.id+'">'+escapeHtml(v.name)+'</option>').join('');
 }
+function updateAllDayUI(){
+  const allDay = document.getElementById('fAllDay').checked;
+  document.getElementById('fEndDateField').style.display = allDay ? 'block' : 'none';
+  document.getElementById('fTimeRow').style.display = allDay ? 'none' : 'flex';
+  document.getElementById('fDateLabel').textContent = allDay ? '開始日' : '日付';
+  if(allDay){
+    const endEl = document.getElementById('fEndDate');
+    if(!endEl.value || endEl.value < document.getElementById('fDate').value){
+      endEl.value = document.getElementById('fDate').value;
+    }
+  }
+}
 function openReservationModal(existing, prefill){
   refreshVehicleSelect();
   document.getElementById('resWarn').innerHTML='';
@@ -723,17 +783,20 @@ function openReservationModal(existing, prefill){
   document.getElementById('resDelete').style.display = existing ? 'inline-block' : 'none';
 
   const base = existing || { vehicleId: prefill?.vehicleId || (state.vehicles[0] && state.vehicles[0].id) || '',
-    date: prefill?.date || fmtISO(new Date()), start:'09:00', end:'11:00', driver:'', dept:'', purpose:'', parking:'', notes:'' };
+    date: prefill?.date || fmtISO(new Date()), endDate:'', allDay:false, start:'09:00', end:'11:00', driver:'', dept:'', purpose:'', parking:'', notes:'' };
 
   document.getElementById('fVehicle').value = base.vehicleId;
+  document.getElementById('fAllDay').checked = !!base.allDay;
   document.getElementById('fDate').value = base.date;
-  document.getElementById('fStart').value = base.start;
-  document.getElementById('fEnd').value = base.end;
+  document.getElementById('fEndDate').value = base.endDate || base.date;
+  document.getElementById('fStart').value = base.start || '09:00';
+  document.getElementById('fEnd').value = base.end || '11:00';
   document.getElementById('fDriver').value = base.driver;
   document.getElementById('fDept').value = base.dept||'';
   document.getElementById('fPurpose').value = base.purpose||'';
   document.getElementById('fParking').value = base.parking||'';
   document.getElementById('fNotes').value = base.notes||'';
+  updateAllDayUI();
 
   document.getElementById('resOverlay').classList.add('show');
 }
@@ -742,9 +805,11 @@ function closeReservationModal(){
 }
 async function saveReservationForm(){
   const vehicleId = document.getElementById('fVehicle').value;
+  const allDay = document.getElementById('fAllDay').checked;
   const date = document.getElementById('fDate').value;
-  const start = document.getElementById('fStart').value;
-  const end = document.getElementById('fEnd').value;
+  const endDateRaw = document.getElementById('fEndDate').value;
+  const start = allDay ? '00:00' : document.getElementById('fStart').value;
+  const end = allDay ? '23:59' : document.getElementById('fEnd').value;
   const driver = document.getElementById('fDriver').value.trim();
   const dept = document.getElementById('fDept').value.trim();
   const purpose = document.getElementById('fPurpose').value.trim();
@@ -756,27 +821,40 @@ async function saveReservationForm(){
   if(!vehicleId || state.vehicles.length===0){
     warnEl.innerHTML = '<div class="warn-box">先に「車両を管理」から車両を登録してください。</div>'; return;
   }
-  if(!date || !start || !end){
-    warnEl.innerHTML = '<div class="warn-box">日付・開始時刻・終了時刻を入力してください。</div>'; return;
+  if(!date){
+    warnEl.innerHTML = '<div class="warn-box">日付を入力してください。</div>'; return;
   }
-  if(end <= start){
-    warnEl.innerHTML = '<div class="warn-box">終了時刻は開始時刻より後に設定してください。</div>'; return;
+  const endDate = allDay ? (endDateRaw || date) : date;
+  if(allDay){
+    if(endDate < date){
+      warnEl.innerHTML = '<div class="warn-box">終了日は開始日以降の日付にしてください。</div>'; return;
+    }
+  }else{
+    if(!start || !end){
+      warnEl.innerHTML = '<div class="warn-box">開始時刻・終了時刻を入力してください。</div>'; return;
+    }
+    if(end <= start){
+      warnEl.innerHTML = '<div class="warn-box">終了時刻は開始時刻より後に設定してください。</div>'; return;
+    }
   }
   if(!driver){
     warnEl.innerHTML = '<div class="warn-box">利用者名を入力してください。</div>'; return;
   }
-  const conflict = findConflict(vehicleId, date, start, end, editingReservationId);
+  const conflict = findConflict(vehicleId, date, endDate, allDay, start, end, editingReservationId);
   if(conflict){
     const cv = vehicleById(conflict.vehicleId);
-    warnEl.innerHTML = '<div class="warn-box">この時間帯は既に予約されています（'+conflict.start+'–'+conflict.end+' '+escapeHtml(conflict.driver)+'・'+escapeHtml(cv?cv.name:'')+'）。時間を調整してください。</div>';
+    const when = conflict.allDay || (conflict.endDate && conflict.endDate!==conflict.date)
+      ? '終日 '+conflict.date+'〜'+(conflict.endDate||conflict.date)
+      : conflict.start+'–'+conflict.end;
+    warnEl.innerHTML = '<div class="warn-box">この期間は既に予約されています（'+when+' '+escapeHtml(conflict.driver)+'・'+escapeHtml(cv?cv.name:'')+'）。日程を調整してください。</div>';
     return;
   }
 
   if(editingReservationId){
     const r = state.reservations.find(x=>x.id===editingReservationId);
-    Object.assign(r, {vehicleId,date,start,end,driver,dept,purpose,parking,notes});
+    Object.assign(r, {vehicleId,date,endDate,allDay,start,end,driver,dept,purpose,parking,notes});
   }else{
-    state.reservations.push({id:uid(),vehicleId,date,start,end,driver,dept,purpose,parking,notes});
+    state.reservations.push({id:uid(),vehicleId,date,endDate,allDay,start,end,driver,dept,purpose,parking,notes});
   }
   await saveReservations();
   closeReservationModal();
@@ -875,6 +953,10 @@ document.getElementById('manageVehiclesBtn').onclick = openVehicleModal;
 document.getElementById('resClose').onclick = closeReservationModal;
 document.getElementById('resCancel').onclick = closeReservationModal;
 document.getElementById('resSave').onclick = saveReservationForm;
+document.getElementById('fAllDay').onchange = updateAllDayUI;
+document.getElementById('fDate').onchange = ()=>{
+  if(document.getElementById('fAllDay').checked) updateAllDayUI();
+};
 document.getElementById('resDelete').onclick = deleteCurrentReservation;
 document.getElementById('vehClose').onclick = closeVehicleModal;
 document.getElementById('addVehicleBtn').onclick = addVehicleFromForm;
