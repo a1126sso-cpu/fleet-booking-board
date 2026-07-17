@@ -9,7 +9,7 @@
   "kv_namespaces": [
     {
       "binding": "FLEET_KV",
-      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+      "id": "3d91a7ced65243568ae3f920fc34045a"
     }
   ]
 }
