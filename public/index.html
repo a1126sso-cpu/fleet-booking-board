@@ -1,51 +1,1094 @@
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>社用車予約ボード</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%E7%A4%BE%E7%94%A8%E8%BB%8A%E4%BA%88%E7%B4%84%E3%83%9C%E3%83%BC%E3%83%89%22%2C%22short_name%22%3A%22%E7%A4%BE%E7%94%A8%E8%BB%8A%E4%BA%88%E7%B4%84%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F5F6F2%22%2C%22theme_color%22%3A%22%231C2321%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFRElEQVR4nO3cO3YURxiG4RKH48w7EAGXyCvxYrwcFuOVEBkTWDtw5gQHtmCQNDPd07e/6nueFJBaVf/b1TNIumvF3L9/%2B/Xoa2A7D5%2B/3B19DacOvRjDTmvHRrH7Jzb0XLJ3DLt9MoPPHHuFsPknMfgssXUIm31wg8%2Batgph9Q9q8NnS2iG8WvODGX62tvaMrVKTwecIa5wGi08Aw89R1pi9RQEYfo62dAZvDsDwU8WSWbwpAMNPNbfO5OwADD9V3TKbswIw/FQ3d0YnB2D46cWcWZ0UgOGnN1Nn9moAhp9eTZndVb8VAnpzMQB3f3p3bYbPBmD4GcWlWfYIRLQXA3D3ZzTnZtoJQLRnAbj7M6qXZtsJQLQfAnD3Z3RPZ9wJQLRvAbj7k%2BJ01p0ARBMA0V615vGHPI8z7wQgmgCIJgCiCYBod14Ak8wJQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARHt99AVU99cffx59CYu9%2BfDu6Esoyw/EnDHC4D8lhOcE8MSIg/%2BUEL7zGuBEwvC3lvN1TiGA/6UNRdrXe44AWu4wpH7dpwRAtPgA0u%2BC6V9/fABkiw4g/e73KHkdogMAARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEC0rn8oPvm7GKvp9QftuwvA0NfXUwxdPQIZ/j70tE9dnAA9LSg/qn4alD8BDH/fqu9f6QCqLx7TVN7H0gHA1soGUPmuwXxV97NkAFUXi2Uq7mvJAGAvAiBauQAqHpOsp9r%2BlgsA9iQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaK%2BPvoA9/f37Txf//Odf/9npSo5lHb6LCODahj/9e6MOgHV4bugApm74uX83ygBYh/OGfQ1w66av/TGOZh0uGzKANTes5823DteVC2DpL1PdYqN63Pyq61Dtl%2BWWC2CJLQe1pwisw3TDBLDHxvSw%2BdZhnpIBVDsmWUfFfS0ZQGvzFmvPO1Llu1/ldag4/K0VDgD2UDqAKXeNI%2B7IFU%2BByutQ9e7fWvEAWqu9eFxXff%2B6%2BFaIx0Ws9otVOa/64D8qfwKc6mVR0/W0T12cAKdOF9eJUEdPQ3%2BquwBOvfnwrn36eNznrsQ63KarRyBYmwCI1n0Av/x2H/E5r7EOt%2Bk%2BAFhiiAD2vBNVvutZh/mGCABuNUwAe9yRerjrWYd5hgmgtW03pqdNtw7TDRVAa9tsUI%2Bbbh2mGS6A1tbdqJ433TpcN2QAra2zYSNsunW47O7%2B/duvR1/E1j59fJj190fdcOvwXEQAj64NQMKGt2YdTkUFAE8N%2BxoAphAA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQLRXD5%2B/3B19EXCEh89f7pwARBMA0QRANAEQ7VVr/70YOPpCYE%2BPM%2B8EIJoAiPYtAI9BpDiddScA0X4IwCnA6J7OuBOAaM8CcAowqpdm2wlAtBcDcAowmnMz7QQg2tkAnAKM4tIsXzwBREDvrs2wRyCiXQ3AKUCvpszupBNABPRm6sxOfgQSAb2YM6uzXgOIgOrmzujsF8EioKpbZvOmd4FEQDW3zuTNb4OKgCqWzOKi/wcQAUdbOoOL/yNMBBxljdlbdXjv37/9uubHg5esedNd9VshnAZsbe0Z22xgnQasaaub6%2BZ3bCGwxNZPFbs9sgiBOfZ6nN79mV0IXLL368hDX7SKgdaOffOk3Ls2ohhbtXcK/wWXcZmcghaqyQAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image/png%22%7D%2C%7B%22src%22%3A%22data%3Aimage/png%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAQbElEQVR4nO3cT5bbxtXGYbSOT2bZgTyQ5VFWksVkOV6MV%2BKRLA%2BkHWSWiTLQaYv9h2yCBFD31vs84%2B98AQpg3R%2BLLT8slPT%2B44dvo68BYAtf//zrYfQ18JKHMogBD/CdQBjDoh/AsAdYRxTszwLvwMAH2JYg2J4F3YCBD3AsQXA/C3gjQx%2BgBjFwG4u2gqEPUJsYuJ6FeoOhD9CTGLjM4pxh8APMQQi8zqKcMPQB5iYGfrAQi8EPkEYIhAeAwQ%2BQLTkEIm/c4AfgVGIIRN2wwQ/AJUkhEHGjBj8AaySEwLvRF7A3wx%2BAtRJmx7SFk/DwANjfrKcB092UwQ/AHmYLgal%2BAjD8AdjLbDNmipqZ7aEAUNsMpwHtTwAMfwCONsPsaR0AMzwAAHrqPoNaHmF0X3QA5tLxJ4F2JwCGPwDVdJxNrQKg4wIDkKHbjGpxZNFtUQHI1uEngfInAIY/AN10mF2lA6DDAgLAa6rPsLIBUH3hAOAtlWdZyQCovGAAsEbVmVYuAKouFADcquJsKxUAFRcIALZQbcaVCYBqCwMAW6s060oEQKUFAYA9VZl5wwOgykIAwFEqzL6hAVBhAQBghNEzcFgAjL5xABht5CwcEgCGPwB8N2omHh4Ahj8APDViNh4aAIY/ALzu6Bl5WAAY/gBw2ZGz8pAAMPwB4DpHzczh/x0AAOB4uweAb/8AsM4Rs3PXADD8AeA2e8/Q3QLA8AeA%2B%2Bw5S/0NAAAE2iUAfPsHgG3sNVM3DwDDHwC2tcds3TQADH8A2MfWM9bfAABAoM0CwLd/ANjXlrN2kwAw/AHgGFvNXD8BAECguwPAt38AONYWs9cJAAAEuisAfPsHgDHuncE3B4DhDwBj3TOL/QQAAIFuCgDf/gGghltnshMAAAi0OgB8%2BweAWm6ZzU4AACDQqgDw7R8Aalo7o50AAECgqwPAt38AqG3NrHYCAACBrgoA3/4BoIdrZ7YTAAAIJAAAINCbAeD4HwB6uWZ2OwEAgEAXA8C3fwDo6a0Z7gQAAAIJAAAIdDYAHP8DQG%2BXZrkTAAAIJAAAINCrAeD4HwDmcG6mOwEAgEACAAACvQgAx/8AMJfXZrsTAAAIJAAAIJAAAIBATwLA7/8AMKfnM94JAAAEEgAAEEgAAECgvwPA7/8AMLfTWe8EAAACCQAACCQAACCQAACAQO%2BWxR8AAkCKx5nvBAAAAgkAAAgkAAAgkAAAgEACAAACCQAACCQAACDQg/8GAADkcQIAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABDop9EXAJV8%2BfR59CWws59//WX0JUAJD%2B8/fvg2%2BiJgFAMfQUAqAUAcQ59zxABJBAAxDH6uJQRIIACYnsHPrYQAM/OvAJia4c89vD/MzAkAU7JxszWnAczGCQDTMfzZg/eK2QgApmKTZk/eL2YiAJiGzZkjeM%2BYhQBgCjZljuR9YwYCgPZsxozgvaM7AUBrNmFG8v7RmQCgLZsvFXgP6UoAAEAgAUBLvnVRifeRjgQA7dhsqch7STcCAAACCQBa8S2LyryfdCIAACCQAKAN367owHtKFwIAAAIJAAAIJABowbEqnXhf6UAAAEAgAQAAgQQAAAQSAJTn91Q68t5SnQAAgEACAAACCQAACCQAACCQAACAQAIAAAIJAAAIJAAAIJAAAIBAAgAAAgkAAAgkAAAgkAAAgEACAAACCQAACCQAACCQAACAQAIAAAIJAAAIJAAAIJAAAIBAAgAAAgkAAAgkAAAgkAAAgEACAAACCQAACCQAACCQAKC8n3/9ZfQlwGreW6oTAAAQSAAAQCABAACBBAAt%2BD2VTryvdCAAACDQw/uPH76NvgjG%2B/Lp8%2BhLAA7klAIBEMrAB04JgjwCIIihD1xDDGQQAJMz9IF7iIF5CYBJGfzAloTAfPwrgAkZ/sDW7CvzcQIwER9Q4AhOA%2BbgBGAShj9wFPvNHJwANOeDCIzkNKAvJwCNGf7AaPahvgRAUz50QBX2o54EQEM%2BbEA19qV%2BBEAzPmRAVfanXgRAIz5cQHX2qT4EQBM%2BVEAX9qseBEADPkxAN/at%2BgQAAAQSAMWpaKAr%2B1dtAqAwHx6gO/tYXQIAAAIJgKJUMzAL%2B1lNAqAgHxZgNva1egQAAAQSAMWoZGBW9rdaBAAABBIAABBIABTieAyYnX2uDgEAAIEEAAAEEgBFOBYDUtjvahAAABBIAABAIAEAAIEEQAF%2BDwPS2PfGEwAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgX4afQHw39//ser//p///t9OVwK38x7TjQDgUGs3yWv/f9hMOZL3mBkIAHa3xWa55n/DJsoevMfMRgCwmyM2zEv/uzZQtuA9ZlYCgM2N2jCfs4FyD%2B8xsxMAbKbKhvmcDZQ1vMek8M8A2UTVTfNUh2tkrA7vSIdrpIeH9x8/fBt9ESzLl0%2BfR1/CTbpuRr5Fccp7fLyff/1l9CXEcwLAzbpumsvS%2B9rZVud3ofO1M54A4CYzbDwz3AP3meEdmOEeGEMAsNpMG85M98I6Mz37me6F4wiAIrr8HjbjRjPjPXHZjM%2B80z112e9mJwC4WqcNZq2Z742nZn7WM98b2xMAXCVhY0m4x3QJzzjhHtmGACik6rFY0oaSdK9pkp5t5Xutus8lEgBcVHkj2UviPc8u8Zkm3jPrCADOSt5Aku99NsnPMvneeZsAKMbxGDAr%2B1stAoBX%2BeZgDWbgGVoDzhMABY2uZBvGD9aiL8/uhwprMXpf4yUBUJQPCzAL%2B1lNAoAnKnxTqMaa9OOZvWRNeE4AFKaage7sY3UJgOKO/PD4hnCetenDszrv6LUx/GsTAAAQSAA0cERF%2B9b0NmtUn2f0tqPWyLf/%2BgRAEz5MQBf2qx4EQCM%2BVEB19qk%2BBEAze3y4HJtez1rV5dlcb6%2B1Mvx7EQAN%2BZAB1diX%2BhEATfmwAVXYj3oSAI350AGj2Yf6%2Bmn0BXCfxw/fl0%2BfB18JkMTg788JwCRu/TD6w6n1rFk9nsl696yZ4T8HJwATcRoA7Mngn4sTgAn5kAJbs6/MxwnApJwGAFsw%2BOclACZ3%2BuEVA8A1DP0MAiCIGADOMfTzCIBQjx/2P34bfCHAMIZ%2BNgEAN7Bx1iJkYT3/CgAAAgkAAAgkAAAgkAAAgEACINy//vN%2B9CW0Y83q8UzWs2YIAAAIJAAAIJAAAIBAAgAAAgkA/DHQCtaqLs/metaKZREAABBJAABAIAHAsiyOBK9hjerzjN5mjXgkAAAgkADgb74ZnGdt%2BvCszrM2nBIAABBIAPCEbwgvWZN%2BPLOXrAnPCQAACCQAeME3hR%2BsRV%2Be3Q/WgtcIAF5lw7AGM/AMrQHnCQAACCQAOCv5m0Pyvc8m%2BVkm3ztvEwBclLiBJN7z7BKfaeI9s44A4E1JG0nSvaZJerZJ98rtBABXSdhQEu4xXcIzTrhHtiEAuNrMG8vM98ZTMz/rme%2BN7QkAVplxg5nxnrhsxmc%2B4z2xLwHAajNtNDPdC%2BvM9OxnuheOIwC4yQwbzgz3wH1meAdmuAfGEADcrPPG0/na2Vbnd6HztTPew/uPH76Nvgj6%2B%2BO3r6Mv4So2TC7xHpPECQCb6LAhdbhGxurwjnS4RnpwAsDmqn2LsmFyC%2B8xsxMA7Gb0BmrDZAveY2YlANjd0RuoDZM9eI%2BZjQDgUHttojZLjuQ9ZgYCgOHWbqY2SSryHtONAACAQP4ZIAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABBIAABAIAEAAIEEAAAEEgAAEEgAAEAgAQAAgQQAAAQSAAAQSAAAQCABAACBBAAABBIAABDo3dc//3oYfREAwHG%2B/vnXgxMAAAgkAAAgkAAAgEACAAACCQAACCQAACCQAACAQO%2BW5fu/Bxx9IQDA/h5nvhMAAAgkAAAgkAAAgEACAAAC/R0A/hAQAOZ2OuudAABAIAEAAIEEAAAEehIA/g4AAOb0fMY7AQCAQAIAAAIJAAAI9CIA/B0AAMzltdnuBAAAAgkAAAj0agD4GQAA5nBupjsBAIBAAgAAAp0NAD8DAEBvl2a5EwAACCQAACDQxQDwMwAA9PTWDHcCAACB3gwApwAA0Ms1s9sJAAAEEgAAEOiqAPAzAAD0cO3MdgIAAIGuDgCnAABQ25pZ7QQAAAKtCgCnAABQ09oZ7QQAAAKtDgCnAABQyy2z2QkAAAS6KQCcAgBADbfOZCcAABDo5gBwCgAAY90zi%2B86ARABADDGvTPYTwAAEOjuAHAKAADH2mL2OgEAgECbBIBTAAA4xlYzd7MTABEAAPvactb6CQAAAm0aAE4BAGAfW8/YzU8ARAAAbGuP2brLTwAiAAC2sddM9TcAABBotwBwCgAA99lzlu56AiACAOA2e8/Q3X8CEAEAsM4Rs9PfAABAoEMCwCkAAFznqJl52AmACACAy46clYf%2BBCACAOB1R8/Iw/8GQAQAwFMjZuOQPwIUAQDw3aiZOOxfAYgAANKNnIVD/xmgCAAg1egZOPy/AzB6AQDgaBVm3/AAWJYaCwEAR6gy80oEwLLUWRAA2EulWVcmAJal1sIAwJaqzbhSAbAs9RYIAO5VcbaVC4BlqblQAHCLqjOtZAAsS90FA4BrVZ5lZQNgWWovHABcUn2GlQ6AZam/gADwXIfZVf4CT73/%2BOHb6GsAgHM6DP5H5U8ATnVaWACydJtRrQJgWfotMADz6zib2l3wKT8JADBSx8H/qN0JwKnOCw9Ab91nUOsAWJb%2BDwCAfmaYPe1v4JSfBADY0wyD/1H7E4BTMz0YAGqZbcZMdTOnnAYAsIXZBv%2BjKW/qlBAA4BazDv5HU/0E8JrZHyAA20uYHdPf4CmnAQBckjD4H8Xc6CkhAMCppMH/KO6GTwkBgGyJg/9R7I2fEgIAWZIH/6P4BTglBADmZvD/YCHOEAMAczD0X2dR3iAEAHoy%2BC%2BzOCuIAYDaDP3rWagbiQGAGgz921i0DYgBgGMZ%2BvezgDsQBADbMvC3Z0EPIAgA1jHw92eBBxEFAN8Z9mNY9KIEAjALA76m/wOx4SI%2Bw8Zi9wAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image/png%22%7D%5D%7D">
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFRElEQVR4nO3cO3YURxiG4RKH48w7EAGXyCvxYrwcFuOVEBkTWDtw5gQHtmCQNDPd07e/6nueFJBaVf/b1TNIumvF3L9/+/Xoa2A7D5+/3B19DacOvRjDTmvHRrH7Jzb0XLJ3DLt9MoPPHHuFsPknMfgssXUIm31wg8+atgph9Q9q8NnS2iG8WvODGX62tvaMrVKTwecIa5wGi08Aw89R1pi9RQEYfo62dAZvDsDwU8WSWbwpAMNPNbfO5OwADD9V3TKbswIw/FQ3d0YnB2D46cWcWZ0UgOGnN1Nn9moAhp9eTZndVb8VAnpzMQB3f3p3bYbPBmD4GcWlWfYIRLQXA3D3ZzTnZtoJQLRnAbj7M6qXZtsJQLQfAnD3Z3RPZ9wJQLRvAbj7k+J01p0ARBMA0V615vGHPI8z7wQgmgCIJgCiCYBod14Ak8wJQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARHt99AVU99cffx59CYu9+fDu6Esoyw/EnDHC4D8lhOcE8MSIg/+UEL7zGuBEwvC3lvN1TiGA/6UNRdrXe44AWu4wpH7dpwRAtPgA0u+C6V9/fABkiw4g/e73KHkdogMAARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEC0rn8oPvm7GKvp9QftuwvA0NfXUwxdPQIZ/j70tE9dnAA9LSg/qn4alD8BDH/fqu9f6QCqLx7TVN7H0gHA1soGUPmuwXxV97NkAFUXi2Uq7mvJAGAvAiBauQAqHpOsp9r+lgsA9iQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaK+PvoA9/f37Txf//Odf/9npSo5lHb6LCODahj/9e6MOgHV4bugApm74uX83ygBYh/OGfQ1w66av/TGOZh0uGzKANTes5823DteVC2DpL1PdYqN63Pyq61Dtl+WWC2CJLQe1pwisw3TDBLDHxvSw+dZhnpIBVDsmWUfFfS0ZQGvzFmvPO1Llu1/ldag4/K0VDgD2UDqAKXeNI+7IFU+ByutQ9e7fWvEAWqu9eFxXff+6+FaIx0Ws9otVOa/64D8qfwKc6mVR0/W0T12cAKdOF9eJUEdPQ3+quwBOvfnwrn36eNznrsQ63KarRyBYmwCI1n0Av/x2H/E5r7EOt+k+AFhiiAD2vBNVvutZh/mGCABuNUwAe9yRerjrWYd5hgmgtW03pqdNtw7TDRVAa9tsUI+bbh2mGS6A1tbdqJ433TpcN2QAra2zYSNsunW47O7+/duvR1/E1j59fJj190fdcOvwXEQAj64NQMKGt2YdTkUFAE8N+xoAphAA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQLRXD5+/3B19EXCEh89f7pwARBMA0QRANAEQ7VVr/70YOPpCYE+PM+8EIJoAiPYtAI9BpDiddScA0X4IwCnA6J7OuBOAaM8CcAowqpdm2wlAtBcDcAowmnMz7QQg2tkAnAKM4tIsXzwBREDvrs2wRyCiXQ3AKUCvpszupBNABPRm6sxOfgQSAb2YM6uzXgOIgOrmzujsF8EioKpbZvOmd4FEQDW3zuTNb4OKgCqWzOKi/wcQAUdbOoOL/yNMBBxljdlbdXjv37/9uubHg5esedNd9VshnAZsbe0Z22xgnQasaaub6+Z3bCGwxNZPFbs9sgiBOfZ6nN79mV0IXLL368hDX7SKgdaOffOk3Ls2ohhbtXcK/wWXcZmcghaqyQAAAABJRU5ErkJggg==">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAFRElEQVR4nO3cO3YURxiG4RKH48w7EAGXyCvxYrwcFuOVEBkTWDtw5gQHtmCQNDPd07e/6nueFJBaVf/b1TNIumvF3L9/+/Xoa2A7D5+/3B19DacOvRjDTmvHRrH7Jzb0XLJ3DLt9MoPPHHuFsPknMfgssXUIm31wg8+atgph9Q9q8NnS2iG8WvODGX62tvaMrVKTwecIa5wGi08Aw89R1pi9RQEYfo62dAZvDsDwU8WSWbwpAMNPNbfO5OwADD9V3TKbswIw/FQ3d0YnB2D46cWcWZ0UgOGnN1Nn9moAhp9eTZndVb8VAnpzMQB3f3p3bYbPBmD4GcWlWfYIRLQXA3D3ZzTnZtoJQLRnAbj7M6qXZtsJQLQfAnD3Z3RPZ9wJQLRvAbj7k+J01p0ARBMA0V615vGHPI8z7wQgmgCIJgCiCYBod14Ak8wJQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARHt99AVU99cffx59CYu9+fDu6Esoyw/EnDHC4D8lhOcE8MSIg/+UEL7zGuBEwvC3lvN1TiGA/6UNRdrXe44AWu4wpH7dpwRAtPgA0u+C6V9/fABkiw4g/e73KHkdogMAARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEC0rn8oPvm7GKvp9QftuwvA0NfXUwxdPQIZ/j70tE9dnAA9LSg/qn4alD8BDH/fqu9f6QCqLx7TVN7H0gHA1soGUPmuwXxV97NkAFUXi2Uq7mvJAGAvAiBauQAqHpOsp9r+lgsA9iQAogmAaAIgmgCIJgCiCYBoAiCaAIgmAKIJgGgCIJoAiCYAogmAaK+PvoA9/f37Txf//Odf/9npSo5lHb6LCODahj/9e6MOgHV4bugApm74uX83ygBYh/OGfQ1w66av/TGOZh0uGzKANTes5823DteVC2DpL1PdYqN63Pyq61Dtl+WWC2CJLQe1pwisw3TDBLDHxvSw+dZhnpIBVDsmWUfFfS0ZQGvzFmvPO1Llu1/ldag4/K0VDgD2UDqAKXeNI+7IFU+ByutQ9e7fWvEAWqu9eFxXff+6+FaIx0Ws9otVOa/64D8qfwKc6mVR0/W0T12cAKdOF9eJUEdPQ3+quwBOvfnwrn36eNznrsQ63KarRyBYmwCI1n0Av/x2H/E5r7EOt+k+AFhiiAD2vBNVvutZh/mGCABuNUwAe9yRerjrWYd5hgmgtW03pqdNtw7TDRVAa9tsUI+bbh2mGS6A1tbdqJ433TpcN2QAra2zYSNsunW47O7+/duvR1/E1j59fJj190fdcOvwXEQAj64NQMKGt2YdTkUFAE8N+xoAphAA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQDQBEE0ARBMA0QRANAEQTQBEEwDRBEA0ARBNAEQTANEEQLRXD5+/3B19EXCEh89f7pwARBMA0QRANAEQ7VVr/70YOPpCYE+PM+8EIJoAiPYtAI9BpDiddScA0X4IwCnA6J7OuBOAaM8CcAowqpdm2wlAtBcDcAowmnMz7QQg2tkAnAKM4tIsXzwBREDvrs2wRyCiXQ3AKUCvpszupBNABPRm6sxOfgQSAb2YM6uzXgOIgOrmzujsF8EioKpbZvOmd4FEQDW3zuTNb4OKgCqWzOKi/wcQAUdbOoOL/yNMBBxljdlbdXjv37/9uubHg5esedNd9VshnAZsbe0Z22xgnQasaaub6+Z3bCGwxNZPFbs9sgiBOfZ6nN79mV0IXLL368hDX7SKgdaOffOk3Ls2ohhbtXcK/wWXcZmcghaqyQAAAABJRU5ErkJggg==">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="社用車予約">
+<meta name="theme-color" content="#1C2321">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
 
-    if (url.pathname === '/api/vehicles') {
-      return handleData(request, env, 'vehicles');
-    }
-    if (url.pathname === '/api/reservations') {
-      return handleData(request, env, 'reservations');
-    }
-    if (url.pathname === '/api/people') {
-      return handleData(request, env, 'people');
-    }
-
-    // API以外はすべて public フォルダの静的ファイルを返す
-    return env.ASSETS.fetch(request);
-  },
-};
-
-async function handleData(request, env, key) {
-  if (request.method === 'GET') {
-    const value = await env.FLEET_KV.get(key);
-    return new Response(value ?? '[]', {
-      headers: { 'content-type': 'application/json; charset=utf-8' },
-    });
-  }
-
-  if (request.method === 'PUT') {
-    let body;
-    try {
-      body = await request.json();
-    } catch (e) {
-      return new Response(JSON.stringify({ error: 'invalid json' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-      });
-    }
-    if (!Array.isArray(body)) {
-      return new Response(JSON.stringify({ error: 'array expected' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json; charset=utf-8' },
-      });
-    }
-    await env.FLEET_KV.put(key, JSON.stringify(body));
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { 'content-type': 'application/json; charset=utf-8' },
-    });
-  }
-
-  return new Response('Method Not Allowed', { status: 405 });
+:root{
+  --bg:#F5F6F2;
+  --surface:#FFFFFF;
+  --surface-alt:#ECEEE8;
+  --ink:#1C2321;
+  --ink-muted:#5B6660;
+  --line:#DBDED5;
+  --blue:#2B5F8A;
+  --yellow:#F2B705;
+  --green:#3F7D5C;
+  --red:#C4483C;
 }
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Noto Sans JP',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.icon{width:16px;height:16px;display:inline-block;vertical-align:-3px;}
+.icon svg{width:100%;height:100%;}
+button{font-family:inherit;cursor:pointer;}
+
+/* ---------- header ---------- */
+.app-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:18px 28px;background:var(--surface);border-bottom:1px solid var(--line);
+  flex-wrap:wrap;gap:12px;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;
+  font-size:21px;letter-spacing:.02em;
+}
+.brand-badge{
+  width:34px;height:34px;border-radius:9px;background:var(--ink);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+}
+.brand-sub{font-size:11px;color:var(--ink-muted);font-weight:500;letter-spacing:.03em;margin-top:1px;}
+
+.week-nav{display:flex;align-items:center;gap:6px;}
+.nav-btn{
+  width:34px;height:34px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  color:var(--ink);transition:background .15s;
+}
+.nav-btn:hover{background:var(--surface-alt);}
+.week-label{
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13.5px;
+  padding:0 8px;min-width:172px;text-align:center;
+}
+.today-btn{
+  font-size:12.5px;font-weight:700;border:1px solid var(--line);background:var(--surface);
+  border-radius:8px;padding:8px 12px;color:var(--ink);
+}
+.today-btn:hover{background:var(--surface-alt);}
+
+.header-actions{display:flex;gap:8px;align-items:center;}
+.btn-primary{
+  display:flex;align-items:center;gap:6px;
+  background:var(--blue);color:#fff;border:none;border-radius:8px;
+  padding:10px 16px;font-weight:700;font-size:13.5px;transition:background .15s;
+}
+.btn-primary:hover{background:#244f74;}
+.btn-secondary{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;
+  padding:10px 14px;font-weight:700;font-size:13.5px;
+}
+.btn-secondary:hover{background:var(--surface-alt);}
+
+/* ---------- board ---------- */
+.board-outer{margin:22px 28px;}
+.board-frame{
+  border:1px solid var(--line);border-radius:14px;background:var(--surface);
+  overflow:hidden;box-shadow:0 1px 2px rgba(28,35,33,.04);
+}
+.board-scroll{overflow:auto;max-height:66vh;}
+.board-grid{
+  display:grid;
+  grid-template-columns:216px repeat(7,minmax(138px,1fr));
+  min-width:1180px;
+}
+.corner-cell{
+  position:sticky;top:0;left:0;z-index:3;background:var(--surface-alt);
+  border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  display:flex;align-items:center;padding:0 14px;
+  font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.05em;
+}
+.day-head{
+  position:sticky;top:0;z-index:2;background:var(--surface-alt);
+  border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  text-align:center;padding:9px 4px;
+}
+.day-head .wd{font-size:11px;font-weight:700;color:var(--ink-muted);}
+.day-head .dt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:15px;margin-top:2px;}
+.day-head.today{background:#FEF6DD;box-shadow:inset 0 3px 0 var(--yellow);}
+.day-head.sat .wd{color:#2B5F8A;}
+.day-head.sun .wd{color:#C4483C;}
+
+.veh-cell{
+  position:sticky;left:0;z-index:1;background:var(--surface);
+  border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  padding:12px 14px;
+}
+.plate{
+  display:inline-block;background:var(--ink);color:#fff;
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;
+  letter-spacing:.06em;padding:3px 7px;border-radius:4px;margin-bottom:6px;
+}
+.veh-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;}
+.veh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.veh-type{font-size:11px;color:var(--ink-muted);margin-top:2px;}
+
+.day-cell{
+  border-bottom:1px solid var(--line);border-right:1px solid var(--line);
+  padding:6px;min-height:78px;position:relative;transition:background .12s;
+}
+.day-cell:hover{background:#FAFBF8;}
+.day-cell.today{background:#FFFDF5;}
+.day-cell.today:hover{background:#FFFAE8;}
+.cell-add{
+  position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:5px;
+  background:var(--surface-alt);display:flex;align-items:center;justify-content:center;
+  color:var(--ink-muted);opacity:0;transition:opacity .12s;
+}
+.day-cell:hover .cell-add{opacity:1;}
+
+.chip{
+  border-radius:7px;border-left:3px solid;padding:4px 7px;margin-bottom:4px;
+  font-size:11.5px;line-height:1.4;transition:transform .12s,box-shadow .12s;cursor:pointer;
+}
+.chip:hover{transform:translateY(-1px);box-shadow:0 2px 6px rgba(28,35,33,.12);}
+.chip .t{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;}
+.chip .p{font-weight:700;margin-top:1px;}
+.chip .d{color:var(--ink-muted);font-size:10.5px;}
+.chip.allday{border-left-style:dashed;border-left-width:4px;}
+.chip.allday .t{display:flex;align-items:center;gap:5px;}
+.chip.allday .t .badge-allday{
+  background:var(--ink);color:#fff;font-size:9.5px;font-weight:700;
+  padding:1px 5px;border-radius:4px;letter-spacing:.02em;
+}
+.toggle-row{
+  display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;
+  cursor:pointer;margin-bottom:2px;
+}
+.toggle-row input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;}
+
+.empty-board{padding:48px 20px;text-align:center;color:var(--ink-muted);font-size:13.5px;}
+.empty-board b{display:block;color:var(--ink);font-size:15px;margin-bottom:6px;font-family:'Zen Kaku Gothic New',sans-serif;}
+
+/* ---------- mobile day list (shown instead of the board on small screens) ---------- */
+.mobile-list{display:none;}
+.day-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  margin-bottom:12px;overflow:hidden;
+}
+.day-card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;background:var(--surface-alt);
+}
+.day-card.today .day-card-head{background:#FEF6DD;box-shadow:inset 0 3px 0 var(--yellow);}
+.day-card-title{display:flex;align-items:baseline;gap:8px;}
+.day-card-wd{font-size:12px;font-weight:700;color:var(--ink-muted);}
+.day-card-dt{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:16px;}
+.day-card-add{
+  width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;color:var(--ink);flex-shrink:0;
+}
+.day-card-body{padding:4px 14px 10px;}
+.mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);}
+.mrow:first-child{border-top:none;}
+.mrow-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.mrow-main{flex:1;min-width:0;}
+.mrow-time{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;}
+.mrow-veh{font-size:12px;color:var(--ink-muted);margin-top:1px;}
+.mrow-purpose{font-weight:700;font-size:13.5px;margin-top:3px;}
+.mrow-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
+.mtag{font-size:11px;background:var(--surface-alt);color:var(--ink-muted);padding:2px 8px;border-radius:20px;}
+.mrow-empty{padding:14px 0;color:var(--ink-muted);font-size:12.5px;text-align:center;}
+
+.fab{
+  display:none;position:fixed;bottom:22px;right:20px;width:56px;height:56px;border-radius:16px;
+  background:var(--blue);color:#fff;align-items:center;justify-content:center;border:none;
+  box-shadow:0 8px 20px rgba(43,95,138,.35);z-index:40;
+}
+
+/* ---------- upcoming panel ---------- */
+.panel{
+  margin:22px 28px 40px;border:1px solid var(--line);border-radius:14px;background:var(--surface);
+  padding:20px 22px;
+}
+.panel-title{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:15px;margin-bottom:12px;}
+.up-row{
+  display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px;
+}
+.up-row:last-child{border-bottom:none;}
+.up-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.up-when{font-family:'JetBrains Mono',monospace;font-weight:700;width:150px;flex-shrink:0;color:var(--ink);}
+.up-veh{width:150px;flex-shrink:0;color:var(--ink-muted);}
+.up-driver{font-weight:700;}
+.up-purpose{color:var(--ink-muted);}
+.up-empty{color:var(--ink-muted);font-size:13px;padding:6px 4px;}
+
+/* ---------- modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(28,35,33,.45);display:none;
+  align-items:center;justify-content:center;z-index:50;padding:20px;
+}
+.overlay.show{display:flex;}
+.modal{
+  background:var(--surface);border-radius:16px;padding:26px;width:440px;max-width:100%;
+  max-height:88vh;overflow:auto;box-shadow:0 20px 50px rgba(28,35,33,.25);
+  animation:pop .15s ease;
+}
+@keyframes pop{from{opacity:0;transform:scale(.97) translateY(4px);}to{opacity:1;transform:none;}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-title{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:17px;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:none;background:var(--surface-alt);color:var(--ink);display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--line);}
+
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11.5px;font-weight:700;color:var(--ink-muted);letter-spacing:.03em;margin-bottom:5px;}
+.field input,.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+  font-family:'Noto Sans JP',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,95,138,.12);}
+.field-row{display:flex;gap:10px;}
+.field-row .field{flex:1;}
+textarea{resize:vertical;min-height:56px;}
+
+.warn-box{
+  display:flex;gap:8px;align-items:flex-start;background:#FBEDEA;border-left:3px solid var(--red);
+  border-radius:6px;padding:9px 11px;font-size:12.5px;color:#8f3327;margin-bottom:14px;
+}
+
+.color-picker{display:flex;gap:8px;}
+.color-swatch{width:26px;height:26px;border-radius:7px;border:2px solid transparent;cursor:pointer;}
+.color-swatch.selected{border-color:var(--ink);}
+
+.modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.modal-actions-right{display:flex;gap:8px;}
+.btn-danger{background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;}
+.btn-danger:hover{background:#FBEDEA;}
+
+.veh-list-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);}
+.veh-list-row:last-child{border-bottom:none;}
+.veh-list-info{flex:1;}
+.veh-list-name{font-weight:700;font-size:13.5px;}
+.veh-list-plate{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-muted);margin-top:2px;}
+.icon-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;color:var(--ink-muted);}
+.icon-btn:hover{background:var(--surface-alt);color:var(--ink);}
+
+.toast{
+  position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 18px;
+  border-radius:9px;font-size:13px;font-weight:600;z-index:80;opacity:0;transform:translateY(8px);
+  transition:opacity .2s,transform .2s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:none;}
+
+.loading{padding:60px;text-align:center;color:var(--ink-muted);font-size:13.5px;}
+
+/* inputs at 16px prevent iOS auto-zoom on focus */
+.field input,.field select,.field textarea{font-size:16px;}
+.nav-btn,.icon-btn{min-width:36px;min-height:36px;}
+
+@media (max-width:760px){
+  .app-header{padding:12px 14px;gap:10px;}
+  .brand{font-size:18px;}
+  .board-outer{display:none;}
+  .mobile-list{display:block;margin:14px 14px 4px;}
+  .panel{margin:14px;padding:16px 16px 20px;}
+  .week-nav{width:100%;justify-content:center;order:3;}
+  .header-actions{width:100%;order:2;}
+  .header-actions .btn-primary{display:none;}
+  .header-actions{display:flex;gap:8px;}
+  .header-actions .btn-secondary{flex:1;justify-content:center;}
+  .fab{display:flex;}
+  .modal{padding:20px;width:100%;border-radius:16px 16px 0 0;position:fixed;left:0;right:0;bottom:0;max-height:92vh;}
+  .overlay{align-items:flex-end;padding:0;}
+  .field-row{flex-direction:column;gap:0;}
+  .btn-primary,.btn-secondary,.btn-danger{min-height:44px;}
+  .up-row{flex-wrap:wrap;gap:4px 10px;padding:12px 4px;}
+  .up-when{width:auto;font-size:12px;}
+  .up-veh{width:auto;font-size:12px;}
+  .up-driver,.up-purpose{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <div class="brand">
+      <span class="brand-badge">
+        <span class="icon" style="width:18px;height:18px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11"/>
+            <rect x="3" y="11" width="18" height="7" rx="2"/>
+            <circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/>
+          </svg>
+        </span>
+      </span>
+      <div>
+        社用車予約ボード
+        <div class="brand-sub">誰が・いつ・どの車を使うか</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="week-nav">
+    <button class="nav-btn" id="prevWeek">${'' /* filled by JS icon */}</button>
+    <div class="week-label" id="weekLabel"></div>
+    <button class="nav-btn" id="nextWeek"></button>
+    <button class="today-btn" id="gotoToday">今週</button>
+  </div>
+
+  <div class="header-actions">
+    <button class="btn-secondary" id="refreshBtn"></button>
+    <button class="btn-secondary" id="managePeopleBtn"></button>
+    <button class="btn-secondary" id="manageVehiclesBtn"></button>
+    <button class="btn-primary" id="addReservationBtn"></button>
+  </div>
+</div>
+
+<div class="board-outer">
+  <div class="board-frame">
+    <div class="board-scroll">
+      <div class="board-grid" id="boardGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="mobile-list" id="mobileList"></div>
+
+<button class="fab" id="fabAdd" aria-label="予約を追加"></button>
+
+<div class="panel">
+  <div class="panel-title">直近の予約</div>
+  <div id="upcomingList"></div>
+</div>
+
+<!-- reservation modal -->
+<div class="overlay" id="resOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="resModalTitle">予約を追加</div>
+      <button class="modal-close" id="resClose"></button>
+    </div>
+    <div id="resWarn"></div>
+    <div class="field">
+      <label>車両</label>
+      <select id="fVehicle"></select>
+    </div>
+    <div class="field-row">
+      <label class="toggle-row">
+        <input type="checkbox" id="fAllDay">
+        終日（複数日）予約にする
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label id="fDateLabel">日付</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field" id="fEndDateField" style="display:none;">
+        <label>終了日</label>
+        <input type="date" id="fEndDate">
+      </div>
+    </div>
+    <div class="field-row" id="fTimeRow">
+      <div class="field">
+        <label>開始時刻</label>
+        <input type="time" id="fStart">
+      </div>
+      <div class="field">
+        <label>終了時刻</label>
+        <input type="time" id="fEnd">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>利用者名</label>
+        <select id="fDriverSelect"></select>
+      </div>
+      <div class="field">
+        <label>所属（任意）</label>
+        <input type="text" id="fDept" placeholder="例：営業部">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>利用目的</label>
+        <input type="text" id="fPurpose" placeholder="例：得意先訪問">
+      </div>
+      <div class="field">
+        <label>駐車場所（任意）</label>
+        <input type="text" id="fParking" placeholder="例：本社P-3">
+      </div>
+    </div>
+    <div class="field">
+      <label>備考（任意）</label>
+      <textarea id="fNotes" placeholder="行き先、同乗者など"></textarea>
+    </div>
+    <div class="modal-actions">
+      <div>
+        <button class="btn-danger" id="resDelete" style="display:none;">この予約を削除</button>
+      </div>
+      <div class="modal-actions-right">
+        <button class="btn-secondary" id="resCancel">キャンセル</button>
+        <button class="btn-primary" id="resSave">保存する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- vehicle management modal -->
+<div class="overlay" id="vehOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">車両を管理</div>
+      <button class="modal-close" id="vehClose"></button>
+    </div>
+    <div id="vehList"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px;">
+      <div class="modal-title" style="font-size:13.5px;margin-bottom:10px;">新しい車両を追加</div>
+      <div class="field-row">
+        <div class="field"><label>車両名</label><input type="text" id="nVehName" placeholder="例：営業車1（プリウス）"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>ナンバー</label><input type="text" id="nVehPlate" placeholder="例：品川300 あ12-34"></div>
+        <div class="field">
+          <label>種別</label>
+          <select id="nVehType">
+            <option>乗用車</option><option>バン</option><option>トラック</option><option>軽自動車</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>識別カラー</label>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
+      <button class="btn-primary" id="addVehicleBtn" style="margin-top:6px;">車両を追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- phonebook management modal -->
+<div class="overlay" id="peopleOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">電話帳を管理</div>
+      <button class="modal-close" id="peopleClose"></button>
+    </div>
+    <div id="peopleList"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:16px;">
+      <div class="modal-title" style="font-size:13.5px;margin-bottom:10px;">新しい利用者を追加</div>
+      <div class="field-row">
+        <div class="field"><label>氏名</label><input type="text" id="nPersonName" placeholder="例：山田 太郎"></div>
+        <div class="field"><label>電話番号</label><input type="tel" id="nPersonPhone" placeholder="例：090-1234-5678"></div>
+      </div>
+      <button class="btn-primary" id="addPersonBtn" style="margin-top:6px;">利用者を追加</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ICONS = {
+  chevronLeft:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+  chevronRight:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>',
+  pencil:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>',
+  refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>',
+  car:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.5-4.5A2 2 0 018.4 5h7.2a2 2 0 011.9 1.5L19 11"/><rect x="3" y="11" width="18" height="7" rx="2"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>'
+};
+function ic(name,size){return '<span class="icon" style="width:'+(size||16)+'px;height:'+(size||16)+'px;">'+ICONS[name]+'</span>';}
+
+document.getElementById('prevWeek').innerHTML = ic('chevronLeft');
+document.getElementById('nextWeek').innerHTML = ic('chevronRight');
+document.getElementById('refreshBtn').innerHTML = ic('refresh')+' 更新';
+document.getElementById('manageVehiclesBtn').innerHTML = ic('car')+' 車両を管理';
+document.getElementById('managePeopleBtn').innerHTML = ic('book')+' 電話帳を管理';
+document.getElementById('addReservationBtn').innerHTML = ic('plus')+' 予約を追加';
+document.getElementById('resClose').innerHTML = ic('x');
+document.getElementById('vehClose').innerHTML = ic('x');
+document.getElementById('fabAdd').innerHTML = ic('plus',22);
+
+const COLORS = ['#2B5F8A','#3F7D5C','#B3541E','#6B4E9C','#4C7A8F','#8A6D3B'];
+const WD = ['月','火','水','木','金','土','日'];
+
+let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true };
+let editingReservationId = null;
+let selectedNewColor = COLORS[0];
+
+function mondayOf(d){
+  const nd = new Date(d);
+  const day = (nd.getDay()+6)%7;
+  nd.setDate(nd.getDate()-day);
+  nd.setHours(0,0,0,0);
+  return nd;
+}
+function fmtISO(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function addDays(d,n){ const nd=new Date(d); nd.setDate(nd.getDate()+n); return nd; }
+function fmtMD(iso){ const d=new Date(iso+'T00:00:00'); return (d.getMonth()+1)+'/'+d.getDate(); }
+function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : 'id-'+Date.now()+'-'+Math.random().toString(16).slice(2)); }
+function vehicleById(id){ return state.vehicles.find(v=>v.id===id); }
+function personById(id){ return state.people.find(p=>p.id===id); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+async function loadData(){
+  try{
+    const res = await fetch('/api/vehicles');
+    if(!res.ok) throw new Error('failed');
+    const list = await res.json();
+    if(Array.isArray(list) && list.length>0){
+      state.vehicles = list;
+    }else{
+      state.vehicles = [
+        {id:uid(), name:'営業車1（プリウス）', plate:'品川 300 あ 12-34', type:'乗用車', color:COLORS[0]},
+        {id:uid(), name:'営業車2（ノート）', plate:'品川 301 い 56-78', type:'乗用車', color:COLORS[1]},
+        {id:uid(), name:'配送用バン', plate:'品川 500 え 90-12', type:'バン', color:COLORS[3]},
+      ];
+      await saveVehicles();
+    }
+  }catch(e){
+    state.vehicles = [
+      {id:uid(), name:'営業車1（プリウス）', plate:'品川 300 あ 12-34', type:'乗用車', color:COLORS[0]},
+      {id:uid(), name:'営業車2（ノート）', plate:'品川 301 い 56-78', type:'乗用車', color:COLORS[1]},
+      {id:uid(), name:'配送用バン', plate:'品川 500 え 90-12', type:'バン', color:COLORS[3]},
+    ];
+  }
+  try{
+    const res = await fetch('/api/reservations');
+    if(!res.ok) throw new Error('failed');
+    const list = await res.json();
+    state.reservations = Array.isArray(list) ? list : [];
+  }catch(e){
+    state.reservations = [];
+  }
+  try{
+    const res = await fetch('/api/people');
+    if(!res.ok) throw new Error('failed');
+    const list = await res.json();
+    state.people = Array.isArray(list) ? list : [];
+  }catch(e){
+    state.people = [];
+  }
+  state.loading = false;
+}
+async function saveVehicles(){
+  try{
+    const res = await fetch('/api/vehicles', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(state.vehicles)
+    });
+    if(!res.ok) throw new Error('failed');
+  }catch(e){ showToast('保存に失敗しました。もう一度お試しください。'); }
+}
+async function savePeople(){
+  try{
+    const res = await fetch('/api/people', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(state.people)
+    });
+    if(!res.ok) throw new Error('failed');
+  }catch(e){ showToast('保存に失敗しました。もう一度お試しください。'); }
+}
+async function saveReservations(){
+  try{
+    const res = await fetch('/api/reservations', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(state.reservations)
+    });
+    if(!res.ok) throw new Error('failed');
+  }catch(e){ showToast('保存に失敗しました。もう一度お試しください。'); }
+}
+
+function findConflict(vehicleId, date, endDate, allDay, start, end, excludeId){
+  const newEnd = endDate || date;
+  const newSpansDays = allDay || newEnd !== date;
+  return state.reservations.find(r=>{
+    if(r.id===excludeId || r.vehicleId!==vehicleId) return false;
+    const rEnd = r.endDate || r.date;
+    // 日付レンジが重なっていなければ無関係
+    if(newEnd < r.date || date > rEnd) return false;
+    const rSpansDays = r.allDay || rEnd !== r.date;
+    if(newSpansDays || rSpansDays){
+      // どちらかが終日・複数日にまたがる予約の場合、日付が重なった時点で衝突とみなす
+      return true;
+    }
+    // どちらも同日の時間指定予約の場合のみ、時間の重なりで判定
+    return date===r.date && start < r.end && end > r.start;
+  });
+}
+
+/* ---------------- render board ---------------- */
+function render(){
+  renderHeader();
+  renderBoard();
+  renderMobileList();
+  renderUpcoming();
+}
+function renderMobileList(){
+  const el = document.getElementById('mobileList');
+  if(state.vehicles.length===0){
+    el.innerHTML = '<div class="empty-board" style="border:1px solid var(--line);border-radius:14px;background:var(--surface);"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加してください。</div>';
+    return;
+  }
+  const todayISO = fmtISO(new Date());
+  const days = [...Array(7)].map((_,i)=>addDays(state.weekStart,i));
+  el.innerHTML='';
+  days.forEach((d,i)=>{
+    const iso = fmtISO(d);
+    const card = document.createElement('div');
+    card.className = 'day-card'+(iso===todayISO?' today':'');
+    const head = document.createElement('div');
+    head.className='day-card-head';
+    head.innerHTML =
+      '<div class="day-card-title"><span class="day-card-wd">'+WD[i]+'</span><span class="day-card-dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></div>';
+    const addBtn = document.createElement('button');
+    addBtn.className='day-card-add'; addBtn.innerHTML=ic('plus',15);
+    addBtn.onclick = ()=> openReservationModal(null,{vehicleId:state.vehicles[0].id,date:iso});
+    head.appendChild(addBtn);
+    card.appendChild(head);
+
+    const body = document.createElement('div');
+    body.className='day-card-body';
+    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date))
+      .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
+    if(items.length===0){
+      body.innerHTML = '<div class="mrow-empty">予約なし</div>';
+    }else{
+      items.forEach(r=>{
+        const veh = vehicleById(r.vehicleId);
+        const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
+        const timeLabel = isMulti
+          ? '終日'+(r.endDate && r.endDate!==r.date ? '（'+fmtMD(r.date)+'〜'+fmtMD(r.endDate)+'）':'')
+          : r.start+'–'+r.end;
+        const row = document.createElement('div');
+        row.className='mrow';
+        row.innerHTML =
+          '<span class="mrow-dot" style="background:'+(veh?veh.color:'#999')+'"></span>'+
+          '<div class="mrow-main">'+
+            '<div class="mrow-time">'+timeLabel+'</div>'+
+            '<div class="mrow-veh">'+escapeHtml(veh?veh.name:'（不明な車両）')+'</div>'+
+            '<div class="mrow-purpose">'+escapeHtml(r.purpose||'（目的未入力）')+' ・ '+escapeHtml(r.driver)+driverPhoneLink(r)+'</div>'+
+            '<div class="mrow-tags">'+
+              (r.dept?'<span class="mtag">'+escapeHtml(r.dept)+'</span>':'')+
+              (r.parking?'<span class="mtag">駐車:'+escapeHtml(r.parking)+'</span>':'')+
+            '</div>'+
+          '</div>';
+        row.onclick = ()=> openReservationModal(r);
+        body.appendChild(row);
+      });
+    }
+    card.appendChild(body);
+    el.appendChild(card);
+  });
+}
+function renderHeader(){
+  const start = state.weekStart, end = addDays(start,6);
+  const fmt = d => (d.getMonth()+1)+'/'+d.getDate();
+  document.getElementById('weekLabel').textContent = fmt(start)+' 〜 '+fmt(end);
+}
+function renderBoard(){
+  const grid = document.getElementById('boardGrid');
+  grid.innerHTML = '';
+  const todayISO = fmtISO(new Date());
+
+  if(state.vehicles.length===0){
+    grid.style.display='block';
+    grid.innerHTML = '<div class="empty-board"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加すると、予約ボードが使えるようになります。</div>';
+    return;
+  }
+  grid.style.display='grid';
+
+  const corner = document.createElement('div');
+  corner.className='corner-cell'; corner.textContent='車両';
+  grid.appendChild(corner);
+
+  const days = [...Array(7)].map((_,i)=>addDays(state.weekStart,i));
+  days.forEach((d,i)=>{
+    const iso = fmtISO(d);
+    const cell = document.createElement('div');
+    cell.className = 'day-head' + (iso===todayISO?' today':'') + (i===5?' sat':'') + (i===6?' sun':'');
+    cell.innerHTML = '<div class="wd">'+WD[i]+'</div><div class="dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</div>';
+    grid.appendChild(cell);
+  });
+
+  state.vehicles.forEach(veh=>{
+    const vc = document.createElement('div');
+    vc.className='veh-cell';
+    vc.innerHTML =
+      '<div class="plate">'+escapeHtml(veh.plate||'—')+'</div>'+
+      '<div class="veh-name"><span class="veh-dot" style="background:'+veh.color+'"></span>'+escapeHtml(veh.name)+'</div>'+
+      '<div class="veh-type">'+escapeHtml(veh.type||'')+'</div>';
+    grid.appendChild(vc);
+
+    days.forEach(d=>{
+      const iso = fmtISO(d);
+      const dc = document.createElement('div');
+      dc.className = 'day-cell'+(iso===fmtISO(new Date())?' today':'');
+      const addBtn = document.createElement('div');
+      addBtn.className='cell-add'; addBtn.innerHTML = ic('plus',13);
+      addBtn.onclick = (e)=>{ e.stopPropagation(); openReservationModal(null,{vehicleId:veh.id,date:iso}); };
+      dc.appendChild(addBtn);
+      dc.onclick = ()=> openReservationModal(null,{vehicleId:veh.id,date:iso});
+
+      const items = state.reservations.filter(r=>r.vehicleId===veh.id && iso>=r.date && iso<=(r.endDate||r.date))
+        .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
+      items.forEach(r=>{
+        const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
+        const chip = document.createElement('div');
+        chip.className = 'chip' + (isMulti ? ' allday' : '');
+        chip.style.borderLeftColor = veh.color;
+        chip.style.background = veh.color+'15';
+        const timeLabel = isMulti
+          ? '<span class="badge-allday">終日</span>'+(r.date!==r.endDate ? (r.date===iso?'開始':(r.endDate===iso?'終了':'継続')) : '')
+          : r.start+'–'+r.end;
+        chip.innerHTML =
+          '<div class="t">'+timeLabel+'</div>'+
+          '<div class="p">'+escapeHtml(r.purpose||'（目的未入力）')+'</div>'+
+          '<div class="d">'+escapeHtml(r.driver)+driverPhoneLink(r)+(r.dept?' ・ '+escapeHtml(r.dept):'')+(r.parking?' ・ 駐車:'+escapeHtml(r.parking):'')+'</div>';
+        chip.onclick = (e)=>{ e.stopPropagation(); openReservationModal(r); };
+        dc.appendChild(chip);
+      });
+      grid.appendChild(dc);
+    });
+  });
+}
+function renderUpcoming(){
+  const el = document.getElementById('upcomingList');
+  const nowISO = fmtISO(new Date());
+  const nowHM = new Date().toTimeString().slice(0,5);
+  const upcoming = state.reservations
+    .filter(r=>{
+      const effEnd = r.endDate || r.date;
+      const effEndHM = r.allDay ? '23:59' : r.end;
+      return effEnd > nowISO || (effEnd===nowISO && effEndHM >= nowHM);
+    })
+    .sort((a,b)=> (a.date+(a.allDay?'00:00':a.start)).localeCompare(b.date+(b.allDay?'00:00':b.start)))
+    .slice(0,8);
+
+  if(upcoming.length===0){
+    el.innerHTML = '<div class="up-empty">直近の予約はありません。</div>';
+    return;
+  }
+  el.innerHTML = upcoming.map(r=>{
+    const veh = vehicleById(r.vehicleId);
+    const d = new Date(r.date+'T00:00:00');
+    const isMulti = r.allDay || (r.endDate && r.endDate!==r.date);
+    const when = isMulti
+      ? (d.getMonth()+1)+'/'+d.getDate()+'('+WD[(d.getDay()+6)%7]+') 終日'+(r.endDate && r.endDate!==r.date ? '〜'+fmtMD(r.endDate) : '')
+      : (d.getMonth()+1)+'/'+d.getDate()+'('+WD[(d.getDay()+6)%7]+') '+r.start+'–'+r.end;
+    return '<div class="up-row">'+
+      '<span class="up-dot" style="background:'+(veh?veh.color:'#999')+'"></span>'+
+      '<span class="up-when">'+when+'</span>'+
+      '<span class="up-veh">'+escapeHtml(veh?veh.name:'（不明な車両）')+'</span>'+
+      '<span class="up-driver">'+escapeHtml(r.driver)+driverPhoneLink(r)+'</span>'+
+      '<span class="up-purpose">'+escapeHtml(r.purpose||'')+(r.parking?'（駐車:'+escapeHtml(r.parking)+'）':'')+'</span>'+
+      '</div>';
+  }).join('');
+}
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function driverPhoneLink(r){
+  const p = r.driverId ? personById(r.driverId) : null;
+  if(p && p.phone){
+    return ' <a href="tel:'+escapeHtml(p.phone)+'" onclick="event.stopPropagation()" style="color:var(--blue);text-decoration:none;white-space:nowrap;" title="'+escapeHtml(p.name)+'に電話をかける">'+ic('phone',11)+'</a>';
+  }
+  return '';
+}
+
+/* ---------------- reservation modal ---------------- */
+function refreshVehicleSelect(){
+  const sel = document.getElementById('fVehicle');
+  sel.innerHTML = state.vehicles.map(v=>'<option value="'+v.id+'">'+escapeHtml(v.name)+'</option>').join('');
+}
+function refreshDriverSelect(){
+  const sel = document.getElementById('fDriverSelect');
+  if(state.people.length===0){
+    sel.innerHTML = '<option value="">（電話帳が未登録です）</option>';
+  }else{
+    sel.innerHTML = '<option value="">選択してください</option>' +
+      state.people.map(p=>'<option value="'+p.id+'">'+escapeHtml(p.name)+'</option>').join('');
+  }
+}
+function updateAllDayUI(){
+  const allDay = document.getElementById('fAllDay').checked;
+  document.getElementById('fEndDateField').style.display = allDay ? 'block' : 'none';
+  document.getElementById('fTimeRow').style.display = allDay ? 'none' : 'flex';
+  document.getElementById('fDateLabel').textContent = allDay ? '開始日' : '日付';
+  if(allDay){
+    const endEl = document.getElementById('fEndDate');
+    if(!endEl.value || endEl.value < document.getElementById('fDate').value){
+      endEl.value = document.getElementById('fDate').value;
+    }
+  }
+}
+function openReservationModal(existing, prefill){
+  refreshVehicleSelect();
+  refreshDriverSelect();
+  document.getElementById('resWarn').innerHTML='';
+  editingReservationId = existing ? existing.id : null;
+  document.getElementById('resModalTitle').textContent = existing ? '予約を編集' : '予約を追加';
+  document.getElementById('resDelete').style.display = existing ? 'inline-block' : 'none';
+
+  const base = existing || { vehicleId: prefill?.vehicleId || (state.vehicles[0] && state.vehicles[0].id) || '',
+    date: prefill?.date || fmtISO(new Date()), endDate:'', allDay:false, start:'09:00', end:'11:00', driverId:'', driver:'', dept:'', purpose:'', parking:'', notes:'' };
+
+  document.getElementById('fVehicle').value = base.vehicleId;
+  document.getElementById('fAllDay').checked = !!base.allDay;
+  document.getElementById('fDate').value = base.date;
+  document.getElementById('fEndDate').value = base.endDate || base.date;
+  document.getElementById('fStart').value = base.start || '09:00';
+  document.getElementById('fEnd').value = base.end || '11:00';
+  document.getElementById('fDriverSelect').value = base.driverId || '';
+  document.getElementById('fDept').value = base.dept||'';
+  document.getElementById('fPurpose').value = base.purpose||'';
+  document.getElementById('fParking').value = base.parking||'';
+  document.getElementById('fNotes').value = base.notes||'';
+  updateAllDayUI();
+
+  document.getElementById('resOverlay').classList.add('show');
+}
+function closeReservationModal(){
+  document.getElementById('resOverlay').classList.remove('show');
+}
+async function saveReservationForm(){
+  const vehicleId = document.getElementById('fVehicle').value;
+  const allDay = document.getElementById('fAllDay').checked;
+  const date = document.getElementById('fDate').value;
+  const endDateRaw = document.getElementById('fEndDate').value;
+  const start = allDay ? '00:00' : document.getElementById('fStart').value;
+  const end = allDay ? '23:59' : document.getElementById('fEnd').value;
+  const driverId = document.getElementById('fDriverSelect').value;
+  const driverPerson = personById(driverId);
+  const driver = driverPerson ? driverPerson.name : '';
+  const dept = document.getElementById('fDept').value.trim();
+  const purpose = document.getElementById('fPurpose').value.trim();
+  const parking = document.getElementById('fParking').value.trim();
+  const notes = document.getElementById('fNotes').value.trim();
+  const warnEl = document.getElementById('resWarn');
+  warnEl.innerHTML='';
+
+  if(!vehicleId || state.vehicles.length===0){
+    warnEl.innerHTML = '<div class="warn-box">先に「車両を管理」から車両を登録してください。</div>'; return;
+  }
+  if(!date){
+    warnEl.innerHTML = '<div class="warn-box">日付を入力してください。</div>'; return;
+  }
+  const endDate = allDay ? (endDateRaw || date) : date;
+  if(allDay){
+    if(endDate < date){
+      warnEl.innerHTML = '<div class="warn-box">終了日は開始日以降の日付にしてください。</div>'; return;
+    }
+  }else{
+    if(!start || !end){
+      warnEl.innerHTML = '<div class="warn-box">開始時刻・終了時刻を入力してください。</div>'; return;
+    }
+    if(end <= start){
+      warnEl.innerHTML = '<div class="warn-box">終了時刻は開始時刻より後に設定してください。</div>'; return;
+    }
+  }
+  if(!driverId || !driver){
+    warnEl.innerHTML = '<div class="warn-box">利用者名を選択してください。電話帳に登録がなければ「電話帳を管理」から追加してください。</div>'; return;
+  }
+  const conflict = findConflict(vehicleId, date, endDate, allDay, start, end, editingReservationId);
+  if(conflict){
+    const cv = vehicleById(conflict.vehicleId);
+    const when = conflict.allDay || (conflict.endDate && conflict.endDate!==conflict.date)
+      ? '終日 '+conflict.date+'〜'+(conflict.endDate||conflict.date)
+      : conflict.start+'–'+conflict.end;
+    warnEl.innerHTML = '<div class="warn-box">この期間は既に予約されています（'+when+' '+escapeHtml(conflict.driver)+'・'+escapeHtml(cv?cv.name:'')+'）。日程を調整してください。</div>';
+    return;
+  }
+
+  if(editingReservationId){
+    const r = state.reservations.find(x=>x.id===editingReservationId);
+    Object.assign(r, {vehicleId,date,endDate,allDay,start,end,driverId,driver,dept,purpose,parking,notes});
+  }else{
+    state.reservations.push({id:uid(),vehicleId,date,endDate,allDay,start,end,driverId,driver,dept,purpose,parking,notes});
+  }
+  await saveReservations();
+  closeReservationModal();
+  render();
+  showToast('予約を保存しました');
+}
+async function deleteCurrentReservation(){
+  if(!editingReservationId) return;
+  if(!confirm('この予約を削除しますか？')) return;
+  state.reservations = state.reservations.filter(r=>r.id!==editingReservationId);
+  await saveReservations();
+  closeReservationModal();
+  render();
+  showToast('予約を削除しました');
+}
+
+/* ---------------- vehicle modal ---------------- */
+function openVehicleModal(){
+  renderVehicleList();
+  renderColorPicker();
+  document.getElementById('nVehName').value='';
+  document.getElementById('nVehPlate').value='';
+  document.getElementById('vehOverlay').classList.add('show');
+}
+function closeVehicleModal(){
+  document.getElementById('vehOverlay').classList.remove('show');
+  render();
+}
+function renderColorPicker(){
+  selectedNewColor = COLORS[0];
+  const el = document.getElementById('colorPicker');
+  el.innerHTML = COLORS.map((c,i)=>
+    '<div class="color-swatch'+(i===0?' selected':'')+'" data-color="'+c+'" style="background:'+c+'"></div>'
+  ).join('');
+  el.querySelectorAll('.color-swatch').forEach(sw=>{
+    sw.onclick = ()=>{
+      selectedNewColor = sw.dataset.color;
+      el.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+      sw.classList.add('selected');
+    };
+  });
+}
+function renderVehicleList(){
+  const el = document.getElementById('vehList');
+  if(state.vehicles.length===0){
+    el.innerHTML = '<div class="up-empty">まだ車両が登録されていません。</div>';
+    return;
+  }
+  el.innerHTML='';
+  state.vehicles.forEach(v=>{
+    const row = document.createElement('div');
+    row.className='veh-list-row';
+    row.innerHTML =
+      '<span class="veh-dot" style="background:'+v.color+'"></span>'+
+      '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(v.name)+' <span style="color:var(--ink-muted);font-weight:400;">（'+escapeHtml(v.type||'')+'）</span></div>'+
+      '<div class="veh-list-plate">'+escapeHtml(v.plate||'')+'</div></div>';
+    const delBtn = document.createElement('button');
+    delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
+    delBtn.onclick = async ()=>{
+      const count = state.reservations.filter(r=>r.vehicleId===v.id).length;
+      const msg = count>0
+        ? 'この車両には'+count+'件の予約があります。車両を削除すると、それらの予約も削除されます。よろしいですか？'
+        : 'この車両を削除しますか？';
+      if(!confirm(msg)) return;
+      state.vehicles = state.vehicles.filter(x=>x.id!==v.id);
+      state.reservations = state.reservations.filter(r=>r.vehicleId!==v.id);
+      await saveVehicles(); await saveReservations();
+      renderVehicleList();
+      showToast('車両を削除しました');
+    };
+    row.appendChild(delBtn);
+    el.appendChild(row);
+  });
+}
+async function addVehicleFromForm(){
+  const name = document.getElementById('nVehName').value.trim();
+  const plate = document.getElementById('nVehPlate').value.trim();
+  const type = document.getElementById('nVehType').value;
+  if(!name){ showToast('車両名を入力してください'); return; }
+  state.vehicles.push({id:uid(), name, plate, type, color:selectedNewColor});
+  await saveVehicles();
+  document.getElementById('nVehName').value='';
+  document.getElementById('nVehPlate').value='';
+  renderVehicleList();
+  showToast('車両を追加しました');
+}
+
+/* ---------------- phonebook modal ---------------- */
+function openPeopleModal(){
+  renderPeopleList();
+  document.getElementById('nPersonName').value='';
+  document.getElementById('nPersonPhone').value='';
+  document.getElementById('peopleOverlay').classList.add('show');
+}
+function closePeopleModal(){
+  document.getElementById('peopleOverlay').classList.remove('show');
+  render();
+}
+function renderPeopleList(){
+  const el = document.getElementById('peopleList');
+  if(state.people.length===0){
+    el.innerHTML = '<div class="up-empty">まだ利用者が登録されていません。</div>';
+    return;
+  }
+  el.innerHTML='';
+  state.people.forEach(p=>{
+    const row = document.createElement('div');
+    row.className='veh-list-row';
+    row.innerHTML =
+      '<span class="icon" style="width:16px;height:16px;color:var(--ink-muted);">'+ICONS.phone+'</span>'+
+      '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(p.name)+'</div>'+
+      '<div class="veh-list-plate">'+(p.phone?'<a href="tel:'+escapeHtml(p.phone)+'" style="color:var(--blue);text-decoration:none;">'+escapeHtml(p.phone)+'</a>':'（電話番号未登録）')+'</div></div>';
+    const delBtn = document.createElement('button');
+    delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
+    delBtn.onclick = async ()=>{
+      const count = state.reservations.filter(r=>r.driverId===p.id).length;
+      const msg = count>0
+        ? 'この利用者が紐づく予約が'+count+'件あります。削除すると、それらの予約から電話帳の紐付け（発信リンク）だけが外れます（予約自体は残ります）。よろしいですか？'
+        : 'この利用者を電話帳から削除しますか？';
+      if(!confirm(msg)) return;
+      state.people = state.people.filter(x=>x.id!==p.id);
+      state.reservations.forEach(r=>{ if(r.driverId===p.id) r.driverId=''; });
+      await savePeople(); await saveReservations();
+      renderPeopleList();
+      showToast('利用者を削除しました');
+    };
+    row.appendChild(delBtn);
+    el.appendChild(row);
+  });
+}
+async function addPersonFromForm(){
+  const name = document.getElementById('nPersonName').value.trim();
+  const phone = document.getElementById('nPersonPhone').value.trim();
+  if(!name){ showToast('氏名を入力してください'); return; }
+  state.people.push({id:uid(), name, phone});
+  await savePeople();
+  document.getElementById('nPersonName').value='';
+  document.getElementById('nPersonPhone').value='';
+  renderPeopleList();
+  showToast('利用者を追加しました');
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('prevWeek').onclick = ()=>{ state.weekStart = addDays(state.weekStart,-7); render(); };
+document.getElementById('nextWeek').onclick = ()=>{ state.weekStart = addDays(state.weekStart,7); render(); };
+document.getElementById('gotoToday').onclick = ()=>{ state.weekStart = mondayOf(new Date()); render(); };
+document.getElementById('refreshBtn').onclick = async ()=>{ await loadData(); render(); showToast('最新のデータに更新しました'); };
+document.getElementById('addReservationBtn').onclick = ()=> openReservationModal(null,null);
+document.getElementById('fabAdd').onclick = ()=> openReservationModal(null,null);
+document.getElementById('manageVehiclesBtn').onclick = openVehicleModal;
+document.getElementById('resClose').onclick = closeReservationModal;
+document.getElementById('resCancel').onclick = closeReservationModal;
+document.getElementById('resSave').onclick = saveReservationForm;
+document.getElementById('fAllDay').onchange = updateAllDayUI;
+document.getElementById('fDate').onchange = ()=>{
+  if(document.getElementById('fAllDay').checked) updateAllDayUI();
+};
+document.getElementById('resDelete').onclick = deleteCurrentReservation;
+document.getElementById('vehClose').onclick = closeVehicleModal;
+document.getElementById('addVehicleBtn').onclick = addVehicleFromForm;
+document.getElementById('resOverlay').onclick = (e)=>{ if(e.target.id==='resOverlay') closeReservationModal(); };
+document.getElementById('vehOverlay').onclick = (e)=>{ if(e.target.id==='vehOverlay') closeVehicleModal(); };
+document.getElementById('managePeopleBtn').onclick = openPeopleModal;
+document.getElementById('peopleClose').onclick = closePeopleModal;
+document.getElementById('addPersonBtn').onclick = addPersonFromForm;
+document.getElementById('peopleOverlay').onclick = (e)=>{ if(e.target.id==='peopleOverlay') closePeopleModal(); };
+
+(async function init(){
+  document.getElementById('boardGrid').innerHTML = '<div class="loading">読み込み中…</div>';
+  document.getElementById('boardGrid').style.display='block';
+  await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
