@@ -302,6 +302,15 @@ textarea{resize:vertical;min-height:56px;}
 .color-swatch.selected{border-color:var(--ink);}
 
 .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.loc-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surface-alt);padding:4px;border-radius:9px;}
+.loc-tab{
+  flex:1;padding:8px 10px;border:none;border-radius:7px;background:transparent;
+  font-size:12.5px;font-weight:700;color:var(--ink-muted);cursor:pointer;
+}
+.loc-tab.active{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(28,35,33,.08);}
+.loc-gps-result{
+  margin-top:8px;font-size:12px;color:var(--blue);display:flex;align-items:center;gap:5px;min-height:16px;
+}
 .modal-actions-right{display:flex;gap:8px;}
 .btn-danger{background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;}
 .btn-danger:hover{background:#FBEDEA;}
@@ -446,25 +455,13 @@ textarea{resize:vertical;min-height:56px;}
         <input type="time" id="fEnd">
       </div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>利用者名</label>
-        <select id="fDriverSelect"></select>
-      </div>
-      <div class="field">
-        <label>所属（任意）</label>
-        <input type="text" id="fDept" placeholder="例：営業部">
-      </div>
+    <div class="field">
+      <label>利用者名</label>
+      <select id="fDriverSelect"></select>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>利用目的</label>
-        <input type="text" id="fPurpose" placeholder="例：得意先訪問">
-      </div>
-      <div class="field">
-        <label>駐車場所（任意）</label>
-        <input type="text" id="fParking" placeholder="例：本社P-3">
-      </div>
+    <div class="field">
+      <label>利用目的</label>
+      <input type="text" id="fPurpose" placeholder="例：得意先訪問">
     </div>
     <div class="field">
       <label>備考（任意）</label>
@@ -532,6 +529,39 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
+<!-- location record modal -->
+<div class="overlay" id="locOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="locModalTitle">駐車場所を記録</div>
+      <button class="modal-close" id="locClose"></button>
+    </div>
+    <div class="loc-tabs">
+      <button type="button" class="loc-tab active" id="locTabGps">現在地（GPS）</button>
+      <button type="button" class="loc-tab" id="locTabManual">場所名を入力</button>
+    </div>
+    <div id="locGpsPane">
+      <button class="btn-secondary" id="locGetGps" style="width:100%;justify-content:center;">現在地を取得</button>
+      <div id="locGpsResult" class="loc-gps-result"></div>
+      <div class="field" style="margin-top:12px;">
+        <label>メモ（任意）</label>
+        <input type="text" id="locGpsNote" placeholder="例：本社駐車場 3番">
+      </div>
+    </div>
+    <div id="locManualPane" style="display:none;">
+      <div class="field">
+        <label>駐車場所名</label>
+        <input type="text" id="locManualNote" placeholder="例：本社駐車場 3番、〇〇コインパーキング">
+      </div>
+    </div>
+    <div id="locWarn"></div>
+    <div class="modal-actions">
+      <div></div>
+      <button class="btn-primary" id="locSave">保存する</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -558,6 +588,7 @@ document.getElementById('manageVehiclesBtn').innerHTML = ic('car')+' 車両を�
 document.getElementById('managePeopleBtn').innerHTML = ic('book')+' 電話帳を管理';
 document.getElementById('addReservationBtn').innerHTML = ic('plus')+' 予約を追加';
 document.getElementById('resClose').innerHTML = ic('x');
+document.getElementById('locClose').innerHTML = ic('x');
 document.getElementById('vehClose').innerHTML = ic('x');
 document.getElementById('fabAdd').innerHTML = ic('plus',22);
 
@@ -700,6 +731,36 @@ function render(){
   renderMobileList();
   renderUpcoming();
 }
+let locVehicleId = null;
+let locGpsCoords = null;
+let locMode = 'gps';
+function switchLocTab(mode){
+  locMode = mode;
+  document.getElementById('locTabGps').classList.toggle('active', mode==='gps');
+  document.getElementById('locTabManual').classList.toggle('active', mode==='manual');
+  document.getElementById('locGpsPane').style.display = mode==='gps' ? 'block' : 'none';
+  document.getElementById('locManualPane').style.display = mode==='manual' ? 'block' : 'none';
+  document.getElementById('locWarn').innerHTML='';
+}
+function openLocationModal(vehicleId){
+  const veh = vehicleById(vehicleId);
+  if(!veh) return;
+  locVehicleId = vehicleId;
+  locGpsCoords = (veh.lastLocationLat!=null && veh.lastLocationLng!=null)
+    ? {lat:veh.lastLocationLat, lng:veh.lastLocationLng} : null;
+  document.getElementById('locModalTitle').textContent = veh.name+'の駐車場所を記録';
+  document.getElementById('locGpsNote').value = veh.lastLocationLat!=null ? (veh.lastLocationNote||'') : '';
+  document.getElementById('locManualNote').value = veh.lastLocationLat==null ? (veh.lastLocationNote||'') : '';
+  document.getElementById('locGpsResult').innerHTML = locGpsCoords
+    ? ic('pin',12)+' 記録済みの位置情報があります（保存すると更新されます）' : '';
+  const getBtn = document.getElementById('locGetGps');
+  getBtn.disabled = false; getBtn.textContent = '現在地を取得';
+  switchLocTab(veh.lastLocationLat==null && veh.lastLocationNote ? 'manual' : 'gps');
+  document.getElementById('locOverlay').classList.add('show');
+}
+function closeLocationModal(){
+  document.getElementById('locOverlay').classList.remove('show');
+}
 function timeAgoLabel(iso){
   const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs/60000);
@@ -710,27 +771,34 @@ function timeAgoLabel(iso){
   const days = Math.floor(hrs/24);
   return days+'日前';
 }
-function recordVehicleLocation(vehicleId){
-  if(!navigator.geolocation){
-    showToast('この端末では位置情報を取得できません');
-    return;
-  }
-  const veh = vehicleById(vehicleId);
+async function saveLocationForm(){
+  const veh = vehicleById(locVehicleId);
   if(!veh) return;
-  showToast('現在地を取得しています…');
-  navigator.geolocation.getCurrentPosition(async (pos)=>{
-    const note = window.prompt('駐車場所のメモ（任意・例：本社駐車場 3番）', veh.lastLocationNote||'');
-    if(note===null) return;
-    veh.lastLocationLat = pos.coords.latitude;
-    veh.lastLocationLng = pos.coords.longitude;
-    veh.lastLocationNote = note.trim();
-    veh.lastLocationAt = new Date().toISOString();
-    await saveVehicles();
-    renderParkingPanel();
-    showToast('現在地を記録しました');
-  }, (err)=>{
-    showToast('位置情報を取得できませんでした。端末の位置情報設定をご確認ください。');
-  }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+  const warnEl = document.getElementById('locWarn');
+  warnEl.innerHTML='';
+  if(locMode==='gps'){
+    if(!locGpsCoords){
+      warnEl.innerHTML = '<div class="warn-box">先に「現在地を取得」を押してください。</div>';
+      return;
+    }
+    veh.lastLocationLat = locGpsCoords.lat;
+    veh.lastLocationLng = locGpsCoords.lng;
+    veh.lastLocationNote = document.getElementById('locGpsNote').value.trim();
+  }else{
+    const note = document.getElementById('locManualNote').value.trim();
+    if(!note){
+      warnEl.innerHTML = '<div class="warn-box">駐車場所名を入力してください。</div>';
+      return;
+    }
+    veh.lastLocationLat = null;
+    veh.lastLocationLng = null;
+    veh.lastLocationNote = note;
+  }
+  veh.lastLocationAt = new Date().toISOString();
+  await saveVehicles();
+  closeLocationModal();
+  renderParkingPanel();
+  showToast('駐車場所を記録しました');
 }
 function renderParkingPanel(){
   const titleEl = document.querySelector('.parking-panel-title');
@@ -743,19 +811,23 @@ function renderParkingPanel(){
   }
   state.vehicles.forEach(veh=>{
     const item = document.createElement('div');
-    const hasGPS = !!veh.lastLocationAt;
-    const lastRes = !hasGPS ? lastParkingOf(veh.id) : null;
-    item.className = 'parking-item' + (!hasGPS && !lastRes ? ' is-empty' : '');
+    const hasLocation = !!veh.lastLocationAt;
+    const hasGps = hasLocation && veh.lastLocationLat!=null;
+    const lastRes = !hasLocation ? lastParkingOf(veh.id) : null;
+    item.className = 'parking-item' + (!hasLocation && !lastRes ? ' is-empty' : '');
 
     const left = document.createElement('div');
     left.className = 'parking-item-left';
     let spotHtml;
-    if(hasGPS){
+    if(hasGps){
       const mapUrl = 'https://www.google.com/maps?q='+veh.lastLocationLat+','+veh.lastLocationLng;
       spotHtml =
         '<a href="'+mapUrl+'" target="_blank" rel="noopener" class="parking-item-spot">'+
           (veh.lastLocationNote ? escapeHtml(veh.lastLocationNote) : '地図で確認') +
         '</a>'+
+        '<span class="parking-item-time">'+timeAgoLabel(veh.lastLocationAt)+'</span>';
+    }else if(hasLocation){
+      spotHtml = '<span class="parking-item-spot">'+escapeHtml(veh.lastLocationNote)+'</span>'+
         '<span class="parking-item-time">'+timeAgoLabel(veh.lastLocationAt)+'</span>';
     }else if(lastRes){
       spotHtml = '<span class="parking-item-spot">'+escapeHtml(lastRes.parking)+'</span>';
@@ -772,8 +844,8 @@ function renderParkingPanel(){
     const btn = document.createElement('button');
     btn.className = 'parking-item-record';
     btn.type = 'button';
-    btn.innerHTML = ic('locate',12)+'<span>'+(hasGPS?'更新':'記録する')+'</span>';
-    btn.onclick = ()=> recordVehicleLocation(veh.id);
+    btn.innerHTML = ic('locate',12)+'<span>'+(hasLocation?'更新':'記録する')+'</span>';
+    btn.onclick = ()=> openLocationModal(veh.id);
     item.appendChild(btn);
 
     listEl.appendChild(item);
@@ -986,7 +1058,7 @@ function openReservationModal(existing, prefill){
   document.getElementById('resDelete').style.display = existing ? 'inline-block' : 'none';
 
   const base = existing || { vehicleId: prefill?.vehicleId || (state.vehicles[0] && state.vehicles[0].id) || '',
-    date: prefill?.date || fmtISO(new Date()), endDate:'', allDay:false, start:'09:00', end:'11:00', driverId:'', driver:'', dept:'', purpose:'', parking:'', notes:'' };
+    date: prefill?.date || fmtISO(new Date()), endDate:'', allDay:false, start:'09:00', end:'11:00', driverId:'', driver:'', purpose:'', notes:'' };
 
   document.getElementById('fVehicle').value = base.vehicleId;
   document.getElementById('fAllDay').checked = !!base.allDay;
@@ -995,9 +1067,7 @@ function openReservationModal(existing, prefill){
   document.getElementById('fStart').value = base.start || '09:00';
   document.getElementById('fEnd').value = base.end || '11:00';
   document.getElementById('fDriverSelect').value = base.driverId || '';
-  document.getElementById('fDept').value = base.dept||'';
   document.getElementById('fPurpose').value = base.purpose||'';
-  document.getElementById('fParking').value = base.parking||'';
   document.getElementById('fNotes').value = base.notes||'';
   updateAllDayUI();
 
@@ -1016,9 +1086,7 @@ async function saveReservationForm(){
   const driverId = document.getElementById('fDriverSelect').value;
   const driverPerson = personById(driverId);
   const driver = driverPerson ? driverPerson.name : '';
-  const dept = document.getElementById('fDept').value.trim();
   const purpose = document.getElementById('fPurpose').value.trim();
-  const parking = document.getElementById('fParking').value.trim();
   const notes = document.getElementById('fNotes').value.trim();
   const warnEl = document.getElementById('resWarn');
   warnEl.innerHTML='';
@@ -1057,9 +1125,9 @@ async function saveReservationForm(){
 
   if(editingReservationId){
     const r = state.reservations.find(x=>x.id===editingReservationId);
-    Object.assign(r, {vehicleId,date,endDate,allDay,start,end,driverId,driver,dept,purpose,parking,notes});
+    Object.assign(r, {vehicleId,date,endDate,allDay,start,end,driverId,driver,purpose,notes});
   }else{
-    state.reservations.push({id:uid(),vehicleId,date,endDate,allDay,start,end,driverId,driver,dept,purpose,parking,notes});
+    state.reservations.push({id:uid(),vehicleId,date,endDate,allDay,start,end,driverId,driver,purpose,notes});
   }
   await saveReservations();
   closeReservationModal();
@@ -1226,6 +1294,26 @@ document.getElementById('managePeopleBtn').onclick = openPeopleModal;
 document.getElementById('peopleClose').onclick = closePeopleModal;
 document.getElementById('addPersonBtn').onclick = addPersonFromForm;
 document.getElementById('peopleOverlay').onclick = (e)=>{ if(e.target.id==='peopleOverlay') closePeopleModal(); };
+document.getElementById('locClose').onclick = closeLocationModal;
+document.getElementById('locOverlay').onclick = (e)=>{ if(e.target.id==='locOverlay') closeLocationModal(); };
+document.getElementById('locTabGps').onclick = ()=> switchLocTab('gps');
+document.getElementById('locTabManual').onclick = ()=> switchLocTab('manual');
+document.getElementById('locSave').onclick = saveLocationForm;
+document.getElementById('locGetGps').onclick = ()=>{
+  if(!navigator.geolocation){ showToast('この端末では位置情報を取得できません'); return; }
+  const btn = document.getElementById('locGetGps');
+  btn.disabled = true; btn.textContent = '取得中…';
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    locGpsCoords = {lat:pos.coords.latitude, lng:pos.coords.longitude};
+    document.getElementById('locGpsResult').innerHTML =
+      ic('pin',12)+' 現在地を取得しました（精度: 約'+Math.round(pos.coords.accuracy)+'m）';
+    btn.disabled = false; btn.textContent = '現在地を再取得';
+  }, (err)=>{
+    document.getElementById('locWarn').innerHTML =
+      '<div class="warn-box">位置情報を取得できませんでした。端末の位置情報設定をご確認ください。</div>';
+    btn.disabled = false; btn.textContent = '現在地を取得';
+  }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+};
 
 (async function init(){
   document.getElementById('boardGrid').innerHTML = '<div class="loading">読み込み中…</div>';
