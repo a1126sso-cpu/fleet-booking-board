@@ -316,6 +316,9 @@ textarea{resize:vertical;min-height:56px;}
 .btn-danger:hover{background:#FBEDEA;}
 
 .veh-list-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);}
+.veh-list-row-editing{display:block;padding:12px 6px;}
+.veh-edit-form{width:100%;}
+.veh-edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px;}
 .veh-list-row:last-child{border-bottom:none;}
 .veh-list-info{flex:1;}
 .veh-list-name{font-weight:700;font-size:13.5px;}
@@ -598,6 +601,8 @@ const WD = ['月','火','水','木','金','土','日'];
 let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true };
 let editingReservationId = null;
 let selectedNewColor = COLORS[0];
+let editingVehicleId = null;
+let editVehicleColor = null;
 
 function mondayOf(d){
   const nd = new Date(d);
@@ -1146,6 +1151,7 @@ async function deleteCurrentReservation(){
 
 /* ---------------- vehicle modal ---------------- */
 function openVehicleModal(){
+  editingVehicleId = null;
   renderVehicleList();
   renderColorPicker();
   document.getElementById('nVehName').value='';
@@ -1180,10 +1186,71 @@ function renderVehicleList(){
   state.vehicles.forEach(v=>{
     const row = document.createElement('div');
     row.className='veh-list-row';
+
+    if(editingVehicleId===v.id){
+      row.classList.add('veh-list-row-editing');
+      const form = document.createElement('div');
+      form.className='veh-edit-form';
+      form.innerHTML =
+        '<div class="field-row">'+
+          '<div class="field"><label>車両名</label><input type="text" id="evName" value="'+escapeHtml(v.name)+'"></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>ナンバー</label><input type="text" id="evPlate" value="'+escapeHtml(v.plate||'')+'"></div>'+
+          '<div class="field"><label>種別</label><select id="evType">'+
+            ['乗用車','バン','トラック','軽自動車'].map(t=>'<option'+(v.type===t?' selected':'')+'>'+t+'</option>').join('')+
+          '</select></div>'+
+        '</div>'+
+        '<div class="field"><label>識別カラー</label><div class="color-picker" id="evColorPicker"></div></div>'+
+        '<div class="veh-edit-actions">'+
+          '<button class="btn-secondary" id="evCancel" type="button">キャンセル</button>'+
+          '<button class="btn-primary" id="evSave" type="button">保存する</button>'+
+        '</div>';
+      row.appendChild(form);
+      el.appendChild(row);
+
+      editVehicleColor = v.color;
+      const cp = form.querySelector('#evColorPicker');
+      cp.innerHTML = COLORS.map(c=>
+        '<div class="color-swatch'+(c===editVehicleColor?' selected':'')+'" data-color="'+c+'" style="background:'+c+'"></div>'
+      ).join('');
+      cp.querySelectorAll('.color-swatch').forEach(sw=>{
+        sw.onclick = ()=>{
+          editVehicleColor = sw.dataset.color;
+          cp.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+          sw.classList.add('selected');
+        };
+      });
+      form.querySelector('#evCancel').onclick = ()=>{
+        editingVehicleId = null;
+        renderVehicleList();
+      };
+      form.querySelector('#evSave').onclick = async ()=>{
+        const name = form.querySelector('#evName').value.trim();
+        if(!name){ showToast('車両名を入力してください'); return; }
+        v.name = name;
+        v.plate = form.querySelector('#evPlate').value.trim();
+        v.type = form.querySelector('#evType').value;
+        v.color = editVehicleColor;
+        await saveVehicles();
+        editingVehicleId = null;
+        renderVehicleList();
+        showToast('車両情報を更新しました');
+      };
+      return;
+    }
+
     row.innerHTML =
       '<span class="veh-dot" style="background:'+v.color+'"></span>'+
       '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(v.name)+' <span style="color:var(--ink-muted);font-weight:400;">（'+escapeHtml(v.type||'')+'）</span></div>'+
       '<div class="veh-list-plate">'+escapeHtml(v.plate||'')+'</div></div>';
+    const editBtn = document.createElement('button');
+    editBtn.className='icon-btn'; editBtn.innerHTML = ic('pencil',14);
+    editBtn.onclick = ()=>{
+      editingVehicleId = v.id;
+      renderVehicleList();
+    };
+    row.appendChild(editBtn);
     const delBtn = document.createElement('button');
     delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
     delBtn.onclick = async ()=>{
