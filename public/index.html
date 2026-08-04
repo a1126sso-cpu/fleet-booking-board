@@ -275,6 +275,48 @@ a.parking-item-spot:hover{text-decoration:underline;}
   max-height:88vh;overflow:auto;box-shadow:0 20px 50px rgba(28,35,33,.25);
   animation:pop .15s ease;
 }
+.modal-wide{width:1080px;max-width:96vw;}
+.dv-nav{display:flex;align-items:center;gap:10px;}
+.dv-scroll{overflow-x:auto;}
+.dv-chart{min-width:820px;}
+.dv-hours-header{
+  display:grid;grid-template-columns:140px repeat(24,1fr);
+  border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:4px;
+  position:sticky;top:0;background:var(--surface);z-index:2;
+}
+.dv-hour-label{
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-muted);
+  text-align:left;border-left:1px solid var(--line);padding-left:3px;
+}
+.dv-row{display:grid;grid-template-columns:140px 1fr;align-items:stretch;min-height:46px;border-bottom:1px solid var(--line);}
+.dv-row-label{
+  display:flex;flex-direction:column;justify-content:center;padding:6px 10px 6px 0;
+  font-size:12px;font-weight:700;position:sticky;left:0;background:var(--surface);
+}
+.dv-row-label .dv-plate{font-size:10px;font-weight:400;color:var(--ink-muted);}
+.dv-row-track{position:relative;background:
+  repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100%/24));
+}
+.dv-row-track.today-track{background-color:#FEF6DD22;}
+.dv-bar{
+  position:absolute;top:6px;bottom:6px;border-radius:6px;padding:3px 7px;
+  overflow:hidden;cursor:pointer;color:#fff;font-size:11px;line-height:1.3;
+  box-shadow:0 1px 3px rgba(28,35,33,.15);min-width:14px;
+}
+.dv-bar:hover{filter:brightness(1.08);}
+.dv-bar .dv-bar-driver{font-weight:800;white-space:nowrap;}
+.dv-bar .dv-bar-purpose{font-size:10px;opacity:.9;white-space:nowrap;}
+.dv-now-line{
+  position:absolute;top:0;bottom:0;width:2px;background:var(--yellow);z-index:3;
+  box-shadow:0 0 0 1px rgba(0,0,0,.05);
+}
+.dv-now-wrap{position:relative;}
+.dv-empty{padding:24px;text-align:center;color:var(--ink-muted);font-size:13px;}
+@media (max-width:860px){
+  .dv-hours-header{grid-template-columns:90px repeat(24,minmax(28px,1fr));}
+  .dv-row{grid-template-columns:90px 1fr;}
+  .dv-chart{min-width:700px;}
+}
 @keyframes pop{from{opacity:0;transform:scale(.97) translateY(4px);}to{opacity:1;transform:none;}}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .modal-title{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:17px;}
@@ -580,6 +622,23 @@ textarea{resize:vertical;min-height:56px;}
   </div>
 </div>
 
+<!-- day timeline modal -->
+<div class="overlay" id="dayViewOverlay">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <div class="dv-nav">
+        <button class="nav-btn" id="dvPrev"></button>
+        <div class="modal-title" id="dvTitle">タイムライン</div>
+        <button class="nav-btn" id="dvNext"></button>
+      </div>
+      <button class="modal-close" id="dvClose"></button>
+    </div>
+    <div class="dv-scroll">
+      <div class="dv-chart" id="dvChart"></div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -607,6 +666,19 @@ document.getElementById('managePeopleBtn').innerHTML = ic('book')+' 電話帳を
 document.getElementById('addReservationBtn').innerHTML = ic('plus')+' 予約を追加';
 document.getElementById('resClose').innerHTML = ic('x');
 document.getElementById('locClose').innerHTML = ic('x');
+document.getElementById('dvClose').innerHTML = ic('x');
+document.getElementById('dvPrev').innerHTML = ic('chevronLeft');
+document.getElementById('dvNext').innerHTML = ic('chevronRight');
+document.getElementById('dvClose').onclick = closeDayTimeline;
+document.getElementById('dayViewOverlay').onclick = (e)=>{ if(e.target.id==='dayViewOverlay') closeDayTimeline(); };
+document.getElementById('dvPrev').onclick = ()=>{
+  dvDate = fmtISO(addDays(new Date(dvDate+'T00:00:00'), -1));
+  renderDayTimeline();
+};
+document.getElementById('dvNext').onclick = ()=>{
+  dvDate = fmtISO(addDays(new Date(dvDate+'T00:00:00'), 1));
+  renderDayTimeline();
+};
 document.getElementById('vehClose').innerHTML = ic('x');
 document.getElementById('fabAdd').innerHTML = ic('plus',22);
 fillHourMinuteSelects('fStartHour','fStartMin');
@@ -746,6 +818,106 @@ function findConflict(vehicleId, date, endDate, allDay, start, end, excludeId){
 }
 
 /* ---------------- render board ---------------- */
+/* ---------------- day timeline ---------------- */
+let dvDate = null;
+function timeToPct(hhmm){
+  const [h,m] = hhmm.split(':').map(Number);
+  return (h*60+m)/1440*100;
+}
+function openDayTimeline(iso){
+  dvDate = iso;
+  document.getElementById('dayViewOverlay').classList.add('show');
+  renderDayTimeline();
+}
+function closeDayTimeline(){
+  document.getElementById('dayViewOverlay').classList.remove('show');
+}
+function renderDayTimeline(){
+  const d = new Date(dvDate+'T00:00:00');
+  const wd = WD[(d.getDay()+6)%7];
+  document.getElementById('dvTitle').textContent = (d.getMonth()+1)+'/'+d.getDate()+'（'+wd+'）のタイムライン';
+  const chart = document.getElementById('dvChart');
+  chart.innerHTML='';
+
+  if(state.vehicles.length===0){
+    chart.innerHTML = '<div class="dv-empty">車両が登録されていません。</div>';
+    return;
+  }
+
+  const header = document.createElement('div');
+  header.className='dv-hours-header';
+  header.appendChild(document.createElement('div'));
+  for(let h=0; h<24; h++){
+    const lab = document.createElement('div');
+    lab.className='dv-hour-label';
+    lab.textContent = String(h).padStart(2,'0');
+    header.appendChild(lab);
+  }
+  chart.appendChild(header);
+
+  const todayISO = fmtISO(new Date());
+  const isToday = dvDate===todayISO;
+  const nowPct = isToday ? timeToPct(new Date().toTimeString().slice(0,5)) : null;
+
+  state.vehicles.forEach(veh=>{
+    const row = document.createElement('div');
+    row.className='dv-row';
+    const label = document.createElement('div');
+    label.className='dv-row-label';
+    label.innerHTML = '<span>'+escapeHtml(veh.name)+'</span><span class="dv-plate">'+escapeHtml(veh.plate||'')+'</span>';
+    row.appendChild(label);
+
+    const track = document.createElement('div');
+    track.className='dv-row-track'+(isToday?' today-track':'');
+
+    const items = state.reservations.filter(r=>r.vehicleId===veh.id && dvDate>=r.date && dvDate<=(r.endDate||r.date));
+    items.forEach(r=>{
+      const spansDays = r.endDate && r.endDate!==r.date;
+      let leftPct, widthPct, timeLabel;
+      if(r.allDay){
+        leftPct = 0; widthPct = 100;
+        timeLabel = '終日';
+      }else if(spansDays){
+        if(dvDate===r.date){
+          leftPct = timeToPct(r.start); widthPct = 100-leftPct;
+          timeLabel = r.start+'〜';
+        }else if(dvDate===r.endDate){
+          leftPct = 0; widthPct = timeToPct(r.end);
+          timeLabel = '〜'+r.end;
+        }else{
+          leftPct = 0; widthPct = 100;
+          timeLabel = '終日';
+        }
+      }else{
+        leftPct = timeToPct(r.start);
+        widthPct = Math.max(timeToPct(r.end)-leftPct, 1.5);
+        timeLabel = r.start+'–'+r.end;
+      }
+      const bar = document.createElement('div');
+      bar.className='dv-bar';
+      bar.style.left = leftPct+'%';
+      bar.style.width = widthPct+'%';
+      bar.style.background = veh.color;
+      bar.title = timeLabel+' '+r.driver+(r.purpose?'・'+r.purpose:'');
+      bar.innerHTML =
+        '<div class="dv-bar-driver">'+escapeHtml(r.driver)+'</div>'+
+        '<div class="dv-bar-purpose">'+timeLabel+(r.purpose?' ・ '+escapeHtml(r.purpose):'')+'</div>';
+      bar.onclick = ()=>{ closeDayTimeline(); openReservationModal(r); };
+      track.appendChild(bar);
+    });
+
+    if(nowPct!==null){
+      const line = document.createElement('div');
+      line.className='dv-now-line';
+      line.style.left = nowPct+'%';
+      track.appendChild(line);
+    }
+
+    row.appendChild(track);
+    chart.appendChild(row);
+  });
+}
+
 function render(){
   renderHeader();
   renderParkingPanel();
@@ -890,6 +1062,8 @@ function renderMobileList(){
     head.className='day-card-head';
     head.innerHTML =
       '<div class="day-card-title"><span class="day-card-wd">'+WD[i]+'</span><span class="day-card-dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></div>';
+    head.querySelector('.day-card-title').style.cursor='pointer';
+    head.querySelector('.day-card-title').onclick = ()=> openDayTimeline(iso);
     const addBtn = document.createElement('button');
     addBtn.className='day-card-add'; addBtn.innerHTML=ic('plus',15);
     addBtn.onclick = ()=> openReservationModal(null,{vehicleId:state.vehicles[0].id,date:iso});
@@ -964,6 +1138,9 @@ function renderBoard(){
     const cell = document.createElement('div');
     cell.className = 'day-head' + (iso===todayISO?' today':'') + (i===5?' sat':'') + (i===6?' sun':'');
     cell.innerHTML = '<div class="wd">'+WD[i]+'</div><div class="dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</div>';
+    cell.style.cursor='pointer';
+    cell.title='クリックでこの日のタイムラインを表示';
+    cell.onclick = ()=> openDayTimeline(iso);
     grid.appendChild(cell);
   });
 
