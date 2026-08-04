@@ -280,22 +280,27 @@ a.parking-item-spot:hover{text-decoration:underline;}
 .dv-scroll{overflow-x:auto;}
 .dv-chart{min-width:820px;}
 .dv-hours-header{
-  display:grid;grid-template-columns:140px repeat(24,1fr);
+  display:flex;align-items:flex-end;
   border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:4px;
   position:sticky;top:0;background:var(--surface);z-index:2;
 }
-.dv-hour-label{
+.dv-corner{width:140px;flex-shrink:0;}
+.dv-hours-track{position:relative;flex:1;height:14px;}
+.dv-hour-tick{
+  position:absolute;top:0;height:14px;
   font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-muted);
-  text-align:left;border-left:1px solid var(--line);padding-left:3px;
+  border-left:1px solid var(--line);padding-left:3px;white-space:nowrap;
 }
-.dv-row{display:grid;grid-template-columns:140px 1fr;align-items:stretch;min-height:46px;border-bottom:1px solid var(--line);}
+.dv-row{display:flex;align-items:stretch;min-height:46px;border-bottom:1px solid var(--line);}
 .dv-row-label{
+  width:140px;flex-shrink:0;
   display:flex;flex-direction:column;justify-content:center;padding:6px 10px 6px 0;
   font-size:12px;font-weight:700;position:sticky;left:0;background:var(--surface);
 }
 .dv-row-label .dv-plate{font-size:10px;font-weight:400;color:var(--ink-muted);}
-.dv-row-track{position:relative;background:
-  repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100%/24));
+.dv-row-track{
+  position:relative;flex:1;
+  background:repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100%/24));
 }
 .dv-row-track.today-track{background-color:#FEF6DD22;}
 .dv-bar{
@@ -313,8 +318,8 @@ a.parking-item-spot:hover{text-decoration:underline;}
 .dv-now-wrap{position:relative;}
 .dv-empty{padding:24px;text-align:center;color:var(--ink-muted);font-size:13px;}
 @media (max-width:860px){
-  .dv-hours-header{grid-template-columns:90px repeat(24,minmax(28px,1fr));}
-  .dv-row{grid-template-columns:90px 1fr;}
+  .dv-corner{width:90px;}
+  .dv-row-label{width:90px;}
   .dv-chart{min-width:700px;}
 }
 @keyframes pop{from{opacity:0;transform:scale(.97) translateY(4px);}to{opacity:1;transform:none;}}
@@ -846,13 +851,19 @@ function renderDayTimeline(){
 
   const header = document.createElement('div');
   header.className='dv-hours-header';
-  header.appendChild(document.createElement('div'));
+  const corner = document.createElement('div');
+  corner.className='dv-corner';
+  header.appendChild(corner);
+  const hoursTrack = document.createElement('div');
+  hoursTrack.className='dv-hours-track';
   for(let h=0; h<24; h++){
-    const lab = document.createElement('div');
-    lab.className='dv-hour-label';
-    lab.textContent = String(h).padStart(2,'0');
-    header.appendChild(lab);
+    const tick = document.createElement('div');
+    tick.className='dv-hour-tick';
+    tick.style.left = (h/24*100)+'%';
+    tick.textContent = String(h).padStart(2,'0');
+    hoursTrack.appendChild(tick);
   }
+  header.appendChild(hoursTrack);
   chart.appendChild(header);
 
   const todayISO = fmtISO(new Date());
