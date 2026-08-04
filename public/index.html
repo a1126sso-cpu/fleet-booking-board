@@ -287,6 +287,9 @@ a.parking-item-spot:hover{text-decoration:underline;}
   width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
   font-family:'Noto Sans JP',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);
 }
+.time-select-row{display:flex;align-items:center;gap:6px;}
+.time-select-row select{width:auto;flex:1;text-align:center;}
+.time-colon{font-weight:700;color:var(--ink-muted);}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(43,95,138,.12);}
 .field-row{display:flex;gap:10px;}
 .field-row .field{flex:1;}
@@ -437,6 +440,10 @@ textarea{resize:vertical;min-height:56px;}
         <input type="checkbox" id="fMultiDay">
         複数日
       </label>
+      <label class="toggle-row">
+        <input type="checkbox" id="fAllDay">
+        終日
+      </label>
     </div>
     <div class="field-row">
       <div class="field">
@@ -448,20 +455,22 @@ textarea{resize:vertical;min-height:56px;}
         <input type="date" id="fEndDate">
       </div>
     </div>
-    <div class="field-row">
-      <label class="toggle-row">
-        <input type="checkbox" id="fAllDay">
-        終日
-      </label>
-    </div>
     <div class="field-row" id="fTimeRow">
       <div class="field">
         <label id="fStartLabel">開始時刻</label>
-        <input type="time" id="fStart">
+        <div class="time-select-row">
+          <select id="fStartHour"></select>
+          <span class="time-colon">:</span>
+          <select id="fStartMin"></select>
+        </div>
       </div>
       <div class="field">
         <label id="fEndLabel">終了時刻</label>
-        <input type="time" id="fEnd">
+        <div class="time-select-row">
+          <select id="fEndHour"></select>
+          <span class="time-colon">:</span>
+          <select id="fEndMin"></select>
+        </div>
       </div>
     </div>
     <div class="field">
@@ -600,6 +609,8 @@ document.getElementById('resClose').innerHTML = ic('x');
 document.getElementById('locClose').innerHTML = ic('x');
 document.getElementById('vehClose').innerHTML = ic('x');
 document.getElementById('fabAdd').innerHTML = ic('plus',22);
+fillHourMinuteSelects('fStartHour','fStartMin');
+fillHourMinuteSelects('fEndHour','fEndMin');
 
 const COLORS = ['#2B5F8A','#3F7D5C','#B3541E','#6B4E9C','#4C7A8F','#8A6D3B'];
 const WD = ['月','火','水','木','金','土','日'];
@@ -1069,6 +1080,29 @@ function refreshDriverSelect(){
       state.people.map(p=>'<option value="'+p.id+'">'+escapeHtml(p.name)+'</option>').join('');
   }
 }
+function fillHourMinuteSelects(hourId, minId){
+  const hourSel = document.getElementById(hourId);
+  const minSel = document.getElementById(minId);
+  hourSel.innerHTML = Array.from({length:24},(_,h)=>{
+    const hh = String(h).padStart(2,'0');
+    return '<option value="'+hh+'">'+hh+'時</option>';
+  }).join('');
+  minSel.innerHTML = ['00','15','30','45'].map(mm=>'<option value="'+mm+'">'+mm+'分</option>').join('');
+}
+function setTimeSelectValue(hourId, minId, hhmm){
+  const [hh, mm] = (hhmm||'09:00').split(':');
+  document.getElementById(hourId).value = hh;
+  const minSel = document.getElementById(minId);
+  if(![...minSel.options].some(o=>o.value===mm)){
+    const opt = document.createElement('option');
+    opt.value = mm; opt.textContent = mm+'分';
+    minSel.appendChild(opt);
+  }
+  minSel.value = mm;
+}
+function getTimeSelectValue(hourId, minId){
+  return document.getElementById(hourId).value+':'+document.getElementById(minId).value;
+}
 function updateReservationFormUI(){
   const multiDay = document.getElementById('fMultiDay').checked;
   const allDay = document.getElementById('fAllDay').checked;
@@ -1101,8 +1135,8 @@ function openReservationModal(existing, prefill){
   document.getElementById('fAllDay').checked = !!base.allDay;
   document.getElementById('fDate').value = base.date;
   document.getElementById('fEndDate').value = base.endDate || base.date;
-  document.getElementById('fStart').value = base.start || '09:00';
-  document.getElementById('fEnd').value = base.end || '11:00';
+  setTimeSelectValue('fStartHour','fStartMin', base.start || '09:00');
+  setTimeSelectValue('fEndHour','fEndMin', base.end || '11:00');
   document.getElementById('fDriverSelect').value = base.driverId || '';
   document.getElementById('fPurpose').value = base.purpose||'';
   document.getElementById('fNotes').value = base.notes||'';
@@ -1119,8 +1153,8 @@ async function saveReservationForm(){
   const allDay = document.getElementById('fAllDay').checked;
   const date = document.getElementById('fDate').value;
   const endDateRaw = document.getElementById('fEndDate').value;
-  const start = allDay ? '00:00' : document.getElementById('fStart').value;
-  const end = allDay ? '23:59' : document.getElementById('fEnd').value;
+  const start = allDay ? '00:00' : getTimeSelectValue('fStartHour','fStartMin');
+  const end = allDay ? '23:59' : getTimeSelectValue('fEndHour','fEndMin');
   const driverId = document.getElementById('fDriverSelect').value;
   const driverPerson = personById(driverId);
   const driver = driverPerson ? driverPerson.name : '';
