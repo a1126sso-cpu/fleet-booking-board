@@ -853,20 +853,18 @@ async function deleteReservationOnServer(id){
 }
 
 function findConflict(vehicleId, date, endDate, allDay, start, end, excludeId){
-  const newEnd = endDate || date;
-  const newSpansDays = allDay || newEnd !== date;
+  // 開始日時・終了日時を「YYYY-MM-DDTHH:MM」形式の文字列にして、実際の日時範囲で重なりを判定する。
+  // こうすることで、複数日の予約でも「開始日の指定時刻より前」「終了日の指定時刻より後」は
+  // 空いている扱いになる（終日の場合のみ、その日を00:00〜23:59として丸ごと専有する）。
+  const newEndDate = endDate || date;
+  const newStartDT = date + 'T' + (allDay ? '00:00' : start);
+  const newEndDT = newEndDate + 'T' + (allDay ? '23:59' : end);
   return state.reservations.find(r=>{
     if(r.id===excludeId || r.vehicleId!==vehicleId) return false;
-    const rEnd = r.endDate || r.date;
-    // 日付レンジが重なっていなければ無関係
-    if(newEnd < r.date || date > rEnd) return false;
-    const rSpansDays = r.allDay || rEnd !== r.date;
-    if(newSpansDays || rSpansDays){
-      // どちらかが終日・複数日にまたがる予約の場合、日付が重なった時点で衝突とみなす
-      return true;
-    }
-    // どちらも同日の時間指定予約の場合のみ、時間の重なりで判定
-    return date===r.date && start < r.end && end > r.start;
+    const rEndDate = r.endDate || r.date;
+    const rStartDT = r.date + 'T' + (r.allDay ? '00:00' : r.start);
+    const rEndDT = rEndDate + 'T' + (r.allDay ? '23:59' : r.end);
+    return newStartDT < rEndDT && newEndDT > rStartDT;
   });
 }
 
