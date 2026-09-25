@@ -87,6 +87,23 @@ button{font-family:inherit;cursor:pointer;}
 }
 .btn-secondary:hover{background:var(--surface-alt);}
 
+/* ---------- dept tabs ---------- */
+.dept-tabs{display:flex;gap:6px;margin:0 28px 14px;flex-wrap:wrap;}
+.dept-tab{
+  padding:7px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);
+  font-size:12.5px;font-weight:700;color:var(--ink-muted);cursor:pointer;
+}
+.dept-tab:hover{background:var(--surface-alt);}
+.dept-tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.dept-tab-timeline{
+  margin-left:auto;background:var(--blue);color:#fff;border-color:var(--blue);
+  display:inline-flex;align-items:center;gap:5px;
+}
+.dept-tab-timeline:hover{filter:brightness(1.08);}
+@media (max-width:860px){
+  .dept-tabs{margin:0 14px 12px;}
+}
+
 /* ---------- parking panel ---------- */
 .parking-panel{
   margin:0 28px;padding:14px 18px;border:1px solid var(--line);border-radius:12px;
@@ -365,6 +382,11 @@ textarea{resize:vertical;min-height:56px;}
 .btn-danger{background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;padding:9px 14px;font-weight:700;font-size:13px;}
 .btn-danger:hover{background:#FBEDEA;}
 
+.veh-group-header{
+  font-size:11px;font-weight:800;color:var(--ink-muted);letter-spacing:.04em;
+  text-transform:uppercase;margin:14px 0 4px;padding:0 6px;
+}
+.veh-group-header:first-child{margin-top:0;}
 .veh-list-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--line);}
 .veh-list-row-editing{display:block;padding:12px 6px;}
 .veh-edit-form{width:100%;}
@@ -447,6 +469,8 @@ textarea{resize:vertical;min-height:56px;}
     <button class="btn-primary" id="addReservationBtn"></button>
   </div>
 </div>
+
+<div class="dept-tabs" id="deptTabs"></div>
 
 <div class="parking-panel" id="parkingPanel">
   <div class="parking-panel-title"></div>
@@ -566,6 +590,15 @@ textarea{resize:vertical;min-height:56px;}
           </select>
         </div>
       </div>
+      <div class="field-row">
+        <div class="field">
+          <label>部門</label>
+          <select id="nVehDept">
+            <option value="">未設定</option>
+            <option>美術部</option><option>装飾部</option><option>小道具</option>
+          </select>
+        </div>
+      </div>
       <div class="field">
         <label>識別カラー</label>
         <div class="color-picker" id="colorPicker"></div>
@@ -588,6 +621,15 @@ textarea{resize:vertical;min-height:56px;}
       <div class="field-row">
         <div class="field"><label>氏名</label><input type="text" id="nPersonName" placeholder="例：山田 太郎"></div>
         <div class="field"><label>電話番号</label><input type="tel" id="nPersonPhone" placeholder="例：090-1234-5678"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>部門</label>
+          <select id="nPersonDept">
+            <option value="">未設定</option>
+            <option>美術部</option><option>装飾部</option><option>小道具</option>
+          </select>
+        </div>
       </div>
       <button class="btn-primary" id="addPersonBtn" style="margin-top:6px;">利用者を追加</button>
     </div>
@@ -659,7 +701,8 @@ const ICONS = {
   phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>',
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>',
-  locate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>'
+  locate:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>'
 };
 function ic(name,size){return '<span class="icon" style="width:'+(size||16)+'px;height:'+(size||16)+'px;">'+ICONS[name]+'</span>';}
 
@@ -692,7 +735,7 @@ fillHourMinuteSelects('fEndHour','fEndMin');
 const COLORS = ['#2B5F8A','#3F7D5C','#B3541E','#6B4E9C','#4C7A8F','#8A6D3B'];
 const WD = ['月','火','水','木','金','土','日'];
 
-let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true };
+let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true, vehicleFilter: 'all' };
 let editingReservationId = null;
 let selectedNewColor = COLORS[0];
 let editingVehicleId = null;
@@ -890,8 +933,9 @@ function renderDayTimeline(){
   const chart = document.getElementById('dvChart');
   chart.innerHTML='';
 
-  if(state.vehicles.length===0){
-    chart.innerHTML = '<div class="dv-empty">車両が登録されていません。</div>';
+  const vehicles = filteredVehicles();
+  if(vehicles.length===0){
+    chart.innerHTML = '<div class="dv-empty">'+(state.vehicles.length===0?'車両が登録されていません。':'この部門の車両はありません。')+'</div>';
     return;
   }
 
@@ -916,7 +960,7 @@ function renderDayTimeline(){
   const isToday = dvDate===todayISO;
   const nowPct = isToday ? timeToPct(new Date().toTimeString().slice(0,5)) : null;
 
-  state.vehicles.forEach(veh=>{
+  vehicles.forEach(veh=>{
     const row = document.createElement('div');
     row.className='dv-row';
     const label = document.createElement('div');
@@ -975,8 +1019,33 @@ function renderDayTimeline(){
   });
 }
 
+function filteredVehicles(){
+  return state.vehicleFilter==='all' ? state.vehicles : state.vehicles.filter(v=>v.department===state.vehicleFilter);
+}
+function openTimelineFromTab(){
+  const todayISO = fmtISO(new Date());
+  const weekDays = [...Array(7)].map((_,i)=>fmtISO(addDays(state.weekStart,i)));
+  const defaultDate = weekDays.includes(todayISO) ? todayISO : weekDays[0];
+  openDayTimeline(defaultDate);
+}
+function renderDeptTabs(){
+  const el = document.getElementById('deptTabs');
+  const depts = ['all','装飾部','小道具','美術部'];
+  el.innerHTML = depts.map(d=>{
+    const label = d==='all' ? 'すべて' : d;
+    return '<button type="button" class="dept-tab'+(state.vehicleFilter===d?' active':'')+'" data-dept="'+d+'">'+label+'</button>';
+  }).join('') + '<button type="button" class="dept-tab dept-tab-timeline" id="deptTabTimeline">'+ic('clock',13)+' タイムライン</button>';
+  el.querySelectorAll('.dept-tab[data-dept]').forEach(btn=>{
+    btn.onclick = ()=>{
+      state.vehicleFilter = btn.dataset.dept;
+      render();
+    };
+  });
+  document.getElementById('deptTabTimeline').onclick = openTimelineFromTab;
+}
 function render(){
   renderHeader();
+  renderDeptTabs();
   renderParkingPanel();
   renderBoard();
   renderMobileList();
@@ -1056,11 +1125,12 @@ function renderParkingPanel(){
   titleEl.innerHTML = ic('pin',15)+' <span>現在の駐車場所</span>';
   const listEl = document.getElementById('parkingPanelList');
   listEl.innerHTML='';
-  if(state.vehicles.length===0){
-    listEl.innerHTML = '<div class="parking-empty-all">車両が登録されていません。</div>';
+  const vehicles = filteredVehicles();
+  if(vehicles.length===0){
+    listEl.innerHTML = '<div class="parking-empty-all">'+(state.vehicles.length===0?'車両が登録されていません。':'この部門の車両はありません。')+'</div>';
     return;
   }
-  state.vehicles.forEach(veh=>{
+  vehicles.forEach(veh=>{
     const item = document.createElement('div');
     const hasLocation = !!veh.lastLocationAt;
     const hasGps = hasLocation && veh.lastLocationLat!=null;
@@ -1104,10 +1174,16 @@ function renderParkingPanel(){
 }
 function renderMobileList(){
   const el = document.getElementById('mobileList');
+  const vehicles = filteredVehicles();
   if(state.vehicles.length===0){
     el.innerHTML = '<div class="empty-board" style="border:1px solid var(--line);border-radius:14px;background:var(--surface);"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加してください。</div>';
     return;
   }
+  if(vehicles.length===0){
+    el.innerHTML = '<div class="empty-board" style="border:1px solid var(--line);border-radius:14px;background:var(--surface);"><b>この部門の車両はありません</b>別のタブを選んでください。</div>';
+    return;
+  }
+  const vehicleIds = new Set(vehicles.map(v=>v.id));
   const todayISO = fmtISO(new Date());
   const days = [...Array(7)].map((_,i)=>addDays(state.weekStart,i));
   el.innerHTML='';
@@ -1119,17 +1195,15 @@ function renderMobileList(){
     head.className='day-card-head';
     head.innerHTML =
       '<div class="day-card-title"><span class="day-card-wd">'+WD[i]+'</span><span class="day-card-dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></div>';
-    head.querySelector('.day-card-title').style.cursor='pointer';
-    head.querySelector('.day-card-title').onclick = ()=> openDayTimeline(iso);
     const addBtn = document.createElement('button');
     addBtn.className='day-card-add'; addBtn.innerHTML=ic('plus',15);
-    addBtn.onclick = ()=> openReservationModal(null,{vehicleId:state.vehicles[0].id,date:iso});
+    addBtn.onclick = ()=> openReservationModal(null,{vehicleId:vehicles[0].id,date:iso});
     head.appendChild(addBtn);
     card.appendChild(head);
 
     const body = document.createElement('div');
     body.className='day-card-body';
-    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date))
+    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date) && vehicleIds.has(r.vehicleId))
       .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
     if(items.length===0){
       body.innerHTML = '<div class="mrow-empty">予約なし</div>';
@@ -1177,10 +1251,16 @@ function renderBoard(){
   const grid = document.getElementById('boardGrid');
   grid.innerHTML = '';
   const todayISO = fmtISO(new Date());
+  const vehicles = filteredVehicles();
 
   if(state.vehicles.length===0){
     grid.style.display='block';
     grid.innerHTML = '<div class="empty-board"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加すると、予約ボードが使えるようになります。</div>';
+    return;
+  }
+  if(vehicles.length===0){
+    grid.style.display='block';
+    grid.innerHTML = '<div class="empty-board"><b>この部門の車両はありません</b>「車両を管理」から部門を設定するか、別のタブを選んでください。</div>';
     return;
   }
   grid.style.display='grid';
@@ -1195,13 +1275,10 @@ function renderBoard(){
     const cell = document.createElement('div');
     cell.className = 'day-head' + (iso===todayISO?' today':'') + (i===5?' sat':'') + (i===6?' sun':'');
     cell.innerHTML = '<div class="wd">'+WD[i]+'</div><div class="dt">'+(d.getMonth()+1)+'/'+d.getDate()+'</div>';
-    cell.style.cursor='pointer';
-    cell.title='クリックでこの日のタイムラインを表示';
-    cell.onclick = ()=> openDayTimeline(iso);
     grid.appendChild(cell);
   });
 
-  state.vehicles.forEach(veh=>{
+  vehicles.forEach(veh=>{
     const vc = document.createElement('div');
     vc.className='veh-cell';
     vc.innerHTML =
@@ -1494,7 +1571,18 @@ function renderVehicleList(){
     return;
   }
   el.innerHTML='';
-  state.vehicles.forEach(v=>{
+  const groups = ['美術部','装飾部','小道具',''];
+  groups.forEach(g=>{
+    const list = state.vehicles.filter(v=>(v.department||'')===g);
+    if(list.length===0) return;
+    const header = document.createElement('div');
+    header.className='veh-group-header';
+    header.textContent = g || '未設定';
+    el.appendChild(header);
+    list.forEach(v=> renderVehicleRow(v, el));
+  });
+}
+function renderVehicleRow(v, el){
     const row = document.createElement('div');
     row.className='veh-list-row';
 
@@ -1510,6 +1598,12 @@ function renderVehicleList(){
           '<div class="field"><label>ナンバー</label><input type="text" id="evPlate" value="'+escapeHtml(v.plate||'')+'"></div>'+
           '<div class="field"><label>種別</label><select id="evType">'+
             ['乗用車','バン','トラック','軽自動車'].map(t=>'<option'+(v.type===t?' selected':'')+'>'+t+'</option>').join('')+
+          '</select></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>部門</label><select id="evDept">'+
+            '<option value=""'+(!v.department?' selected':'')+'>未設定</option>'+
+            ['美術部','装飾部','小道具'].map(t=>'<option'+(v.department===t?' selected':'')+'>'+t+'</option>').join('')+
           '</select></div>'+
         '</div>'+
         '<div class="field"><label>識別カラー</label><div class="color-picker" id="evColorPicker"></div></div>'+
@@ -1542,6 +1636,7 @@ function renderVehicleList(){
         v.name = name;
         v.plate = form.querySelector('#evPlate').value.trim();
         v.type = form.querySelector('#evType').value;
+        v.department = form.querySelector('#evDept').value;
         v.color = editVehicleColor;
         await saveVehicles();
         editingVehicleId = null;
@@ -1578,17 +1673,18 @@ function renderVehicleList(){
     };
     row.appendChild(delBtn);
     el.appendChild(row);
-  });
 }
 async function addVehicleFromForm(){
   const name = document.getElementById('nVehName').value.trim();
   const plate = document.getElementById('nVehPlate').value.trim();
   const type = document.getElementById('nVehType').value;
+  const department = document.getElementById('nVehDept').value;
   if(!name){ showToast('車両名を入力してください'); return; }
-  state.vehicles.push({id:uid(), name, plate, type, color:selectedNewColor});
+  state.vehicles.push({id:uid(), name, plate, type, department, color:selectedNewColor});
   await saveVehicles();
   document.getElementById('nVehName').value='';
   document.getElementById('nVehPlate').value='';
+  document.getElementById('nVehDept').value='';
   renderVehicleList();
   showToast('車両を追加しました');
 }
@@ -1598,6 +1694,7 @@ function openPeopleModal(){
   renderPeopleList();
   document.getElementById('nPersonName').value='';
   document.getElementById('nPersonPhone').value='';
+  document.getElementById('nPersonDept').value='';
   document.getElementById('peopleOverlay').classList.add('show');
 }
 function closePeopleModal(){
@@ -1611,39 +1708,50 @@ function renderPeopleList(){
     return;
   }
   el.innerHTML='';
-  state.people.forEach(p=>{
-    const row = document.createElement('div');
-    row.className='veh-list-row';
-    row.innerHTML =
-      '<span class="icon" style="width:16px;height:16px;color:var(--ink-muted);">'+ICONS.phone+'</span>'+
-      '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(p.name)+'</div>'+
-      '<div class="veh-list-plate">'+(p.phone?'<a href="tel:'+escapeHtml(p.phone)+'" style="color:var(--blue);text-decoration:none;">'+escapeHtml(p.phone)+'</a>':'（電話番号未登録）')+'</div></div>';
-    const delBtn = document.createElement('button');
-    delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
-    delBtn.onclick = async ()=>{
-      const count = state.reservations.filter(r=>r.driverId===p.id).length;
-      const msg = count>0
-        ? 'この利用者が紐づく予約が'+count+'件あります。削除すると、それらの予約から電話帳の紐付け（発信リンク）だけが外れます（予約自体は残ります）。よろしいですか？'
-        : 'この利用者を電話帳から削除しますか？';
-      if(!confirm(msg)) return;
-      state.people = state.people.filter(x=>x.id!==p.id);
-      state.reservations.forEach(r=>{ if(r.driverId===p.id) r.driverId=''; });
-      await savePeople(); await saveReservations();
-      renderPeopleList();
-      showToast('利用者を削除しました');
-    };
-    row.appendChild(delBtn);
-    el.appendChild(row);
+  const groups = ['美術部','装飾部','小道具',''];
+  groups.forEach(g=>{
+    const list = state.people.filter(p=>(p.department||'')===g);
+    if(list.length===0) return;
+    const header = document.createElement('div');
+    header.className='veh-group-header';
+    header.textContent = g || '未設定';
+    el.appendChild(header);
+    list.forEach(p=>{
+      const row = document.createElement('div');
+      row.className='veh-list-row';
+      row.innerHTML =
+        '<span class="icon" style="width:16px;height:16px;color:var(--ink-muted);">'+ICONS.phone+'</span>'+
+        '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(p.name)+'</div>'+
+        '<div class="veh-list-plate">'+(p.phone?'<a href="tel:'+escapeHtml(p.phone)+'" style="color:var(--blue);text-decoration:none;">'+escapeHtml(p.phone)+'</a>':'（電話番号未登録）')+'</div></div>';
+      const delBtn = document.createElement('button');
+      delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
+      delBtn.onclick = async ()=>{
+        const count = state.reservations.filter(r=>r.driverId===p.id).length;
+        const msg = count>0
+          ? 'この利用者が紐づく予約が'+count+'件あります。削除すると、それらの予約から電話帳の紐付け（発信リンク）だけが外れます（予約自体は残ります）。よろしいですか？'
+          : 'この利用者を電話帳から削除しますか？';
+        if(!confirm(msg)) return;
+        state.people = state.people.filter(x=>x.id!==p.id);
+        state.reservations.forEach(r=>{ if(r.driverId===p.id) r.driverId=''; });
+        await savePeople(); await saveReservations();
+        renderPeopleList();
+        showToast('利用者を削除しました');
+      };
+      row.appendChild(delBtn);
+      el.appendChild(row);
+    });
   });
 }
 async function addPersonFromForm(){
   const name = document.getElementById('nPersonName').value.trim();
   const phone = document.getElementById('nPersonPhone').value.trim();
+  const department = document.getElementById('nPersonDept').value;
   if(!name){ showToast('氏名を入力してください'); return; }
-  state.people.push({id:uid(), name, phone});
+  state.people.push({id:uid(), name, phone, department});
   await savePeople();
   document.getElementById('nPersonName').value='';
   document.getElementById('nPersonPhone').value='';
+  document.getElementById('nPersonDept').value='';
   renderPeopleList();
   showToast('利用者を追加しました');
 }
