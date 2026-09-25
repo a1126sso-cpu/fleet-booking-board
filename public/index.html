@@ -120,7 +120,7 @@ button{font-family:inherit;cursor:pointer;}
   background:var(--surface-alt);border:1px solid var(--line);font-size:12.5px;
 }
 .parking-item-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.parking-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.parking-item-dot{width:6px;height:18px;border-radius:3px;flex-shrink:0;}
 .parking-item-veh{font-weight:700;color:var(--ink);}
 .parking-item-arrow{display:flex;color:var(--ink-muted);}
 .parking-item-arrow .icon{width:11px;height:11px;}
@@ -181,7 +181,7 @@ a.parking-item-spot:hover{text-decoration:underline;}
   letter-spacing:.06em;padding:3px 7px;border-radius:4px;margin-bottom:6px;
 }
 .veh-name{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;}
-.veh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.veh-dot{width:13px;height:13px;border-radius:4px;flex-shrink:0;display:inline-block;vertical-align:-2px;}
 .veh-type{font-size:11px;color:var(--ink-muted);margin-top:2px;}
 .veh-parking{
   font-size:10.5px;color:var(--ink);font-weight:700;margin-top:6px;
@@ -249,7 +249,7 @@ a.parking-item-spot:hover{text-decoration:underline;}
 .day-card-body{padding:4px 14px 10px;}
 .mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);}
 .mrow:first-child{border-top:none;}
-.mrow-dot{width:9px;height:9px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.mrow-dot{width:5px;border-radius:3px;align-self:stretch;flex-shrink:0;}
 .mrow-main{flex:1;min-width:0;}
 .mrow-time{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;}
 .mrow-veh{font-size:12px;color:var(--ink-muted);margin-top:1px;}
@@ -274,7 +274,7 @@ a.parking-item-spot:hover{text-decoration:underline;}
   display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:13px;
 }
 .up-row:last-child{border-bottom:none;}
-.up-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.up-dot{width:5px;height:18px;border-radius:3px;flex-shrink:0;}
 .up-when{font-family:'JetBrains Mono',monospace;font-weight:700;width:150px;flex-shrink:0;color:var(--ink);}
 .up-veh{width:150px;flex-shrink:0;color:var(--ink-muted);}
 .up-driver{font-weight:700;}
@@ -680,7 +680,7 @@ textarea{resize:vertical;min-height:56px;}
       </div>
       <button class="modal-close" id="dvClose"></button>
     </div>
-    <div class="dv-scroll">
+    <div class="dv-scroll" id="dvScroll">
       <div class="dv-chart" id="dvChart"></div>
     </div>
   </div>
@@ -727,6 +727,37 @@ document.getElementById('dvNext').onclick = ()=>{
   dvDate = fmtISO(addDays(new Date(dvDate+'T00:00:00'), 1));
   renderDayTimeline();
 };
+(function(){
+  const scrollEl = document.getElementById('dvScroll');
+  let touchStartX = 0, touchStartY = 0, touchStartScrollLeft = 0;
+  scrollEl.addEventListener('touchstart', (e)=>{
+    if(e.touches.length!==1) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartScrollLeft = scrollEl.scrollLeft;
+  }, {passive:true});
+  scrollEl.addEventListener('touchend', (e)=>{
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - touchStartX;
+    const deltaY = endY - touchStartY;
+    if(Math.abs(deltaX) < 60 || Math.abs(deltaX) < Math.abs(deltaY)*1.5) return;
+    const maxScroll = scrollEl.scrollWidth - scrollEl.clientWidth;
+    if(deltaX < 0){
+      // 左にスワイプ＝翌日へ（チャートが右端まで表示しきっている場合のみ）
+      if(touchStartScrollLeft >= maxScroll - 4){
+        dvDate = fmtISO(addDays(new Date(dvDate+'T00:00:00'), 1));
+        renderDayTimeline();
+      }
+    }else{
+      // 右にスワイプ＝前日へ（チャートが左端まで戻っている場合のみ）
+      if(touchStartScrollLeft <= 4){
+        dvDate = fmtISO(addDays(new Date(dvDate+'T00:00:00'), -1));
+        renderDayTimeline();
+      }
+    }
+  }, {passive:true});
+})();
 document.getElementById('vehClose').innerHTML = ic('x');
 document.getElementById('fabAdd').innerHTML = ic('plus',22);
 fillHourMinuteSelects('fStartHour','fStartMin');
@@ -965,7 +996,7 @@ function renderDayTimeline(){
     row.className='dv-row';
     const label = document.createElement('div');
     label.className='dv-row-label';
-    label.innerHTML = '<span>'+escapeHtml(veh.name)+'</span><span class="dv-plate">'+escapeHtml(veh.plate||'')+'</span>';
+    label.innerHTML = '<span><span class="veh-dot" style="background:'+veh.color+'"></span> '+escapeHtml(veh.name)+'</span><span class="dv-plate">'+escapeHtml(veh.plate||'')+'</span>';
     row.appendChild(label);
 
     const track = document.createElement('div');
