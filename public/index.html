@@ -597,7 +597,7 @@ textarea{resize:vertical;min-height:56px;}
           <label>部門</label>
           <select id="nVehDept">
             <option value="">未設定</option>
-            <option>美術部</option><option>装飾部</option><option>小道具</option>
+            <option>美術部</option><option>装飾・小道具</option><option>個人</option>
           </select>
         </div>
       </div>
@@ -768,10 +768,11 @@ fillHourMinuteSelects('fEndHour','fEndMin');
 const COLORS = ['#E53935','#EF6C00','#C79100','#7CB342','#2E7D32','#00897B','#1E88E5','#3949AB','#8E24AA','#D81159'];
 const WD = ['月','火','水','木','金','土','日'];
 
-let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true, vehicleFilter: 'all' };
+let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true, deptFilter: 'all' };
 let editingReservationId = null;
 let selectedNewColor = COLORS[0];
 let editingVehicleId = null;
+let editingPersonId = null;
 let editVehicleColor = null;
 
 function mondayOf(d){
@@ -966,9 +967,9 @@ function renderDayTimeline(){
   const chart = document.getElementById('dvChart');
   chart.innerHTML='';
 
-  const vehicles = filteredVehicles();
+  const vehicles = state.vehicles;
   if(vehicles.length===0){
-    chart.innerHTML = '<div class="dv-empty">'+(state.vehicles.length===0?'車両が登録されていません。':'この部門の車両はありません。')+'</div>';
+    chart.innerHTML = '<div class="dv-empty">車両が登録されていません。</div>';
     return;
   }
 
@@ -1004,7 +1005,7 @@ function renderDayTimeline(){
     const track = document.createElement('div');
     track.className='dv-row-track'+(isToday?' today-track':'');
 
-    const items = state.reservations.filter(r=>r.vehicleId===veh.id && dvDate>=r.date && dvDate<=(r.endDate||r.date));
+    const items = state.reservations.filter(r=>r.vehicleId===veh.id && dvDate>=r.date && dvDate<=(r.endDate||r.date) && matchesDeptFilter(r));
     items.forEach(r=>{
       const spansDays = r.endDate && r.endDate!==r.date;
       let leftPct, widthPct, timeLabel;
@@ -1052,8 +1053,12 @@ function renderDayTimeline(){
   });
 }
 
-function filteredVehicles(){
-  return state.vehicleFilter==='all' ? state.vehicles : state.vehicles.filter(v=>v.department===state.vehicleFilter);
+function reserverDeptOf(r){
+  const p = r.driverId ? personById(r.driverId) : null;
+  return p ? (p.department||'') : '';
+}
+function matchesDeptFilter(r){
+  return state.deptFilter==='all' || reserverDeptOf(r)===state.deptFilter;
 }
 function openTimelineFromTab(){
   const todayISO = fmtISO(new Date());
@@ -1066,11 +1071,11 @@ function renderDeptTabs(){
   const depts = ['all','装飾部','小道具','美術部'];
   el.innerHTML = depts.map(d=>{
     const label = d==='all' ? 'すべて' : d;
-    return '<button type="button" class="dept-tab'+(state.vehicleFilter===d?' active':'')+'" data-dept="'+d+'">'+label+'</button>';
+    return '<button type="button" class="dept-tab'+(state.deptFilter===d?' active':'')+'" data-dept="'+d+'">'+label+'</button>';
   }).join('') + '<button type="button" class="dept-tab dept-tab-timeline" id="deptTabTimeline">'+ic('clock',13)+' タイムライン</button>';
   el.querySelectorAll('.dept-tab[data-dept]').forEach(btn=>{
     btn.onclick = ()=>{
-      state.vehicleFilter = btn.dataset.dept;
+      state.deptFilter = btn.dataset.dept;
       render();
     };
   });
@@ -1158,9 +1163,9 @@ function renderParkingPanel(){
   titleEl.innerHTML = ic('pin',15)+' <span>現在の駐車場所</span>';
   const listEl = document.getElementById('parkingPanelList');
   listEl.innerHTML='';
-  const vehicles = filteredVehicles();
+  const vehicles = state.vehicles;
   if(vehicles.length===0){
-    listEl.innerHTML = '<div class="parking-empty-all">'+(state.vehicles.length===0?'車両が登録されていません。':'この部門の車両はありません。')+'</div>';
+    listEl.innerHTML = '<div class="parking-empty-all">車両が登録されていません。</div>';
     return;
   }
   vehicles.forEach(veh=>{
@@ -1207,16 +1212,11 @@ function renderParkingPanel(){
 }
 function renderMobileList(){
   const el = document.getElementById('mobileList');
-  const vehicles = filteredVehicles();
-  if(state.vehicles.length===0){
+  const vehicles = state.vehicles;
+  if(vehicles.length===0){
     el.innerHTML = '<div class="empty-board" style="border:1px solid var(--line);border-radius:14px;background:var(--surface);"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加してください。</div>';
     return;
   }
-  if(vehicles.length===0){
-    el.innerHTML = '<div class="empty-board" style="border:1px solid var(--line);border-radius:14px;background:var(--surface);"><b>この部門の車両はありません</b>別のタブを選んでください。</div>';
-    return;
-  }
-  const vehicleIds = new Set(vehicles.map(v=>v.id));
   const todayISO = fmtISO(new Date());
   const days = [...Array(7)].map((_,i)=>addDays(state.weekStart,i));
   el.innerHTML='';
@@ -1236,7 +1236,7 @@ function renderMobileList(){
 
     const body = document.createElement('div');
     body.className='day-card-body';
-    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date) && vehicleIds.has(r.vehicleId))
+    const items = state.reservations.filter(r=>iso>=r.date && iso<=(r.endDate||r.date) && matchesDeptFilter(r))
       .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
     if(items.length===0){
       body.innerHTML = '<div class="mrow-empty">予約なし</div>';
@@ -1283,16 +1283,11 @@ function renderBoard(){
   const grid = document.getElementById('boardGrid');
   grid.innerHTML = '';
   const todayISO = fmtISO(new Date());
-  const vehicles = filteredVehicles();
+  const vehicles = state.vehicles;
 
-  if(state.vehicles.length===0){
-    grid.style.display='block';
-    grid.innerHTML = '<div class="empty-board"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加すると、予約ボードが使えるようになります。</div>';
-    return;
-  }
   if(vehicles.length===0){
     grid.style.display='block';
-    grid.innerHTML = '<div class="empty-board"><b>この部門の車両はありません</b>「車両を管理」から部門を設定するか、別のタブを選んでください。</div>';
+    grid.innerHTML = '<div class="empty-board"><b>車両がまだ登録されていません</b>「車両を管理」から社用車を追加すると、予約ボードが使えるようになります。</div>';
     return;
   }
   grid.style.display='grid';
@@ -1329,7 +1324,7 @@ function renderBoard(){
       dc.appendChild(addBtn);
       dc.onclick = ()=> openReservationModal(null,{vehicleId:veh.id,date:iso});
 
-      const items = state.reservations.filter(r=>r.vehicleId===veh.id && iso>=r.date && iso<=(r.endDate||r.date))
+      const items = state.reservations.filter(r=>r.vehicleId===veh.id && iso>=r.date && iso<=(r.endDate||r.date) && matchesDeptFilter(r))
         .sort((a,b)=> (a.allDay?'':a.start).localeCompare(b.allDay?'':b.start));
       items.forEach(r=>{
         const spansDays = r.endDate && r.endDate!==r.date;
@@ -1367,7 +1362,7 @@ function renderUpcoming(){
     .filter(r=>{
       const effEnd = r.endDate || r.date;
       const effEndHM = r.allDay ? '23:59' : r.end;
-      return effEnd > nowISO || (effEnd===nowISO && effEndHM >= nowHM);
+      return (effEnd > nowISO || (effEnd===nowISO && effEndHM >= nowHM)) && matchesDeptFilter(r);
     })
     .sort((a,b)=> (a.date+(a.allDay?'00:00':a.start)).localeCompare(b.date+(b.allDay?'00:00':b.start)))
     .slice(0,8);
@@ -1603,7 +1598,7 @@ function renderVehicleList(){
     return;
   }
   el.innerHTML='';
-  const groups = ['美術部','装飾部','小道具',''];
+  const groups = ['美術部','装飾・小道具','個人',''];
   groups.forEach(g=>{
     const list = state.vehicles.filter(v=>(v.department||'')===g);
     if(list.length===0) return;
@@ -1635,7 +1630,7 @@ function renderVehicleRow(v, el){
         '<div class="field-row">'+
           '<div class="field"><label>部門</label><select id="evDept">'+
             '<option value=""'+(!v.department?' selected':'')+'>未設定</option>'+
-            ['美術部','装飾部','小道具'].map(t=>'<option'+(v.department===t?' selected':'')+'>'+t+'</option>').join('')+
+            ['美術部','装飾・小道具','個人'].map(t=>'<option'+(v.department===t?' selected':'')+'>'+t+'</option>').join('')+
           '</select></div>'+
         '</div>'+
         '<div class="field"><label>識別カラー</label><div class="color-picker" id="evColorPicker"></div></div>'+
@@ -1723,6 +1718,7 @@ async function addVehicleFromForm(){
 
 /* ---------------- phonebook modal ---------------- */
 function openPeopleModal(){
+  editingPersonId = null;
   renderPeopleList();
   document.getElementById('nPersonName').value='';
   document.getElementById('nPersonPhone').value='';
@@ -1748,31 +1744,80 @@ function renderPeopleList(){
     header.className='veh-group-header';
     header.textContent = g || '未設定';
     el.appendChild(header);
-    list.forEach(p=>{
-      const row = document.createElement('div');
-      row.className='veh-list-row';
-      row.innerHTML =
-        '<span class="icon" style="width:16px;height:16px;color:var(--ink-muted);">'+ICONS.phone+'</span>'+
-        '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(p.name)+'</div>'+
-        '<div class="veh-list-plate">'+(p.phone?'<a href="tel:'+escapeHtml(p.phone)+'" style="color:var(--blue);text-decoration:none;">'+escapeHtml(p.phone)+'</a>':'（電話番号未登録）')+'</div></div>';
-      const delBtn = document.createElement('button');
-      delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
-      delBtn.onclick = async ()=>{
-        const count = state.reservations.filter(r=>r.driverId===p.id).length;
-        const msg = count>0
-          ? 'この利用者が紐づく予約が'+count+'件あります。削除すると、それらの予約から電話帳の紐付け（発信リンク）だけが外れます（予約自体は残ります）。よろしいですか？'
-          : 'この利用者を電話帳から削除しますか？';
-        if(!confirm(msg)) return;
-        state.people = state.people.filter(x=>x.id!==p.id);
-        state.reservations.forEach(r=>{ if(r.driverId===p.id) r.driverId=''; });
-        await savePeople(); await saveReservations();
-        renderPeopleList();
-        showToast('利用者を削除しました');
-      };
-      row.appendChild(delBtn);
-      el.appendChild(row);
-    });
+    list.forEach(p=> renderPersonRow(p, el));
   });
+}
+function renderPersonRow(p, el){
+    const row = document.createElement('div');
+    row.className='veh-list-row';
+
+    if(editingPersonId===p.id){
+      row.classList.add('veh-list-row-editing');
+      const form = document.createElement('div');
+      form.className='veh-edit-form';
+      form.innerHTML =
+        '<div class="field-row">'+
+          '<div class="field"><label>氏名</label><input type="text" id="epName" value="'+escapeHtml(p.name)+'"></div>'+
+          '<div class="field"><label>電話番号</label><input type="tel" id="epPhone" value="'+escapeHtml(p.phone||'')+'"></div>'+
+        '</div>'+
+        '<div class="field-row">'+
+          '<div class="field"><label>部門</label><select id="epDept">'+
+            '<option value=""'+(!p.department?' selected':'')+'>未設定</option>'+
+            ['美術部','装飾部','小道具'].map(t=>'<option'+(p.department===t?' selected':'')+'>'+t+'</option>').join('')+
+          '</select></div>'+
+        '</div>'+
+        '<div class="veh-edit-actions">'+
+          '<button class="btn-secondary" id="epCancel" type="button">キャンセル</button>'+
+          '<button class="btn-primary" id="epSave" type="button">保存する</button>'+
+        '</div>';
+      row.appendChild(form);
+      el.appendChild(row);
+
+      form.querySelector('#epCancel').onclick = ()=>{
+        editingPersonId = null;
+        renderPeopleList();
+      };
+      form.querySelector('#epSave').onclick = async ()=>{
+        const name = form.querySelector('#epName').value.trim();
+        if(!name){ showToast('氏名を入力してください'); return; }
+        p.name = name;
+        p.phone = form.querySelector('#epPhone').value.trim();
+        p.department = form.querySelector('#epDept').value;
+        await savePeople();
+        editingPersonId = null;
+        renderPeopleList();
+        showToast('利用者情報を更新しました');
+      };
+      return;
+    }
+
+    row.innerHTML =
+      '<span class="icon" style="width:16px;height:16px;color:var(--ink-muted);">'+ICONS.phone+'</span>'+
+      '<div class="veh-list-info"><div class="veh-list-name">'+escapeHtml(p.name)+'</div>'+
+      '<div class="veh-list-plate">'+(p.phone?'<a href="tel:'+escapeHtml(p.phone)+'" style="color:var(--blue);text-decoration:none;">'+escapeHtml(p.phone)+'</a>':'（電話番号未登録）')+'</div></div>';
+    const editBtn = document.createElement('button');
+    editBtn.className='icon-btn'; editBtn.innerHTML = ic('pencil',14);
+    editBtn.onclick = ()=>{
+      editingPersonId = p.id;
+      renderPeopleList();
+    };
+    row.appendChild(editBtn);
+    const delBtn = document.createElement('button');
+    delBtn.className='icon-btn'; delBtn.innerHTML = ic('trash',14);
+    delBtn.onclick = async ()=>{
+      const count = state.reservations.filter(r=>r.driverId===p.id).length;
+      const msg = count>0
+        ? 'この利用者が紐づく予約が'+count+'件あります。削除すると、それらの予約から電話帳の紐付け（発信リンク）だけが外れます（予約自体は残ります）。よろしいですか？'
+        : 'この利用者を電話帳から削除しますか？';
+      if(!confirm(msg)) return;
+      state.people = state.people.filter(x=>x.id!==p.id);
+      state.reservations.forEach(r=>{ if(r.driverId===p.id) r.driverId=''; });
+      await savePeople(); await saveReservations();
+      renderPeopleList();
+      showToast('利用者を削除しました');
+    };
+    row.appendChild(delBtn);
+    el.appendChild(row);
 }
 async function addPersonFromForm(){
   const name = document.getElementById('nPersonName').value.trim();
