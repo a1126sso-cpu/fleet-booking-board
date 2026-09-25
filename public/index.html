@@ -364,7 +364,7 @@ textarea{resize:vertical;min-height:56px;}
   border-radius:6px;padding:9px 11px;font-size:12.5px;color:#8f3327;margin-bottom:14px;
 }
 
-.color-picker{display:flex;gap:8px;}
+.color-picker{display:flex;gap:8px;flex-wrap:wrap;}
 .color-swatch{width:26px;height:26px;border-radius:7px;border:2px solid transparent;cursor:pointer;}
 .color-swatch.selected{border-color:var(--ink);}
 
@@ -763,7 +763,7 @@ document.getElementById('fabAdd').innerHTML = ic('plus',22);
 fillHourMinuteSelects('fStartHour','fStartMin');
 fillHourMinuteSelects('fEndHour','fEndMin');
 
-const COLORS = ['#2B5F8A','#3F7D5C','#B3541E','#6B4E9C','#4C7A8F','#8A6D3B'];
+const COLORS = ['#E53935','#EF6C00','#C79100','#7CB342','#2E7D32','#00897B','#1E88E5','#3949AB','#8E24AA','#D81159'];
 const WD = ['月','火','水','木','金','土','日'];
 
 let state = { vehicles: [], reservations: [], people: [], weekStart: mondayOf(new Date()), loading: true, vehicleFilter: 'all' };
