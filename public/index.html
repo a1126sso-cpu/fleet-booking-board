@@ -249,11 +249,13 @@ a.parking-item-spot:hover{text-decoration:underline;}
 .day-card-body{padding:4px 14px 10px;}
 .mrow{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);}
 .mrow:first-child{border-top:none;}
-.mrow-dot{width:5px;border-radius:3px;align-self:stretch;flex-shrink:0;}
 .mrow-main{flex:1;min-width:0;}
 .mrow-time{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;}
-.mrow-veh{font-size:12px;color:var(--ink-muted);margin-top:1px;}
-.mrow-purpose{font-weight:700;font-size:13.5px;margin-top:3px;}
+.mrow-veh{
+  display:inline-block;font-size:11.5px;font-weight:700;color:#fff;
+  padding:3px 9px;border-radius:6px;margin-top:4px;
+}
+.mrow-purpose{font-weight:700;font-size:13.5px;margin-top:5px;}
 .mrow-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px;}
 .mtag{font-size:11px;background:var(--surface-alt);color:var(--ink-muted);padding:2px 8px;border-radius:20px;}
 .mrow-empty{padding:14px 0;color:var(--ink-muted);font-size:12.5px;text-align:center;}
@@ -1255,10 +1257,9 @@ function renderMobileList(){
         const row = document.createElement('div');
         row.className='mrow';
         row.innerHTML =
-          '<span class="mrow-dot" style="background:'+(veh?veh.color:'#999')+'"></span>'+
           '<div class="mrow-main">'+
             '<div class="mrow-time">'+timeLabel+'</div>'+
-            '<div class="mrow-veh">'+escapeHtml(veh?veh.name:'（不明な車両）')+'</div>'+
+            '<div class="mrow-veh" style="background:'+(veh?veh.color:'#999')+'">'+escapeHtml(veh?veh.name:'（不明な車両）')+'</div>'+
             '<div class="mrow-purpose">'+escapeHtml(r.purpose||'（目的未入力）')+' ・ '+escapeHtml(r.driver)+driverPhoneLink(r)+'</div>'+
             '<div class="mrow-tags">'+
               (r.dept?'<span class="mtag">'+escapeHtml(r.dept)+'</span>':'')+
