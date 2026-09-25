@@ -597,7 +597,7 @@ textarea{resize:vertical;min-height:56px;}
           <label>部門</label>
           <select id="nVehDept">
             <option value="">未設定</option>
-            <option>美術部</option><option>装飾・小道具</option><option>個人</option>
+            <option>美術</option><option>装飾・小道具</option><option>個人</option>
           </select>
         </div>
       </div>
@@ -629,7 +629,7 @@ textarea{resize:vertical;min-height:56px;}
           <label>部門</label>
           <select id="nPersonDept">
             <option value="">未設定</option>
-            <option>美術部</option><option>装飾部</option><option>小道具</option>
+            <option>美術</option><option>装飾</option><option>小道具</option>
           </select>
         </div>
       </div>
@@ -1053,9 +1053,16 @@ function renderDayTimeline(){
   });
 }
 
+function normalizedPersonDept(p){
+  const d = (p && p.department) || '';
+  // 以前の「美術部」「装飾部」という表記は、新しい表記に読み替える
+  if(d==='美術部') return '美術';
+  if(d==='装飾部') return '装飾';
+  return d;
+}
 function reserverDeptOf(r){
   const p = r.driverId ? personById(r.driverId) : null;
-  return p ? (p.department||'') : '';
+  return normalizedPersonDept(p);
 }
 function matchesDeptFilter(r){
   return state.deptFilter==='all' || reserverDeptOf(r)===state.deptFilter;
@@ -1068,7 +1075,7 @@ function openTimelineFromTab(){
 }
 function renderDeptTabs(){
   const el = document.getElementById('deptTabs');
-  const depts = ['all','装飾部','小道具','美術部'];
+  const depts = ['all','装飾','小道具','美術'];
   el.innerHTML = depts.map(d=>{
     const label = d==='all' ? 'すべて' : d;
     return '<button type="button" class="dept-tab'+(state.deptFilter===d?' active':'')+'" data-dept="'+d+'">'+label+'</button>';
@@ -1591,6 +1598,13 @@ function renderColorPicker(){
     };
   });
 }
+function normalizedVehicleDept(v){
+  const d = v.department || '';
+  // 以前の分類名は、新しい表記に読み替える
+  if(d==='装飾部' || d==='小道具') return '装飾・小道具';
+  if(d==='美術部') return '美術';
+  return d;
+}
 function renderVehicleList(){
   const el = document.getElementById('vehList');
   if(state.vehicles.length===0){
@@ -1598,16 +1612,27 @@ function renderVehicleList(){
     return;
   }
   el.innerHTML='';
-  const groups = ['美術部','装飾・小道具','個人',''];
+  const groups = ['美術','装飾・小道具','個人',''];
+  const shown = new Set();
   groups.forEach(g=>{
-    const list = state.vehicles.filter(v=>(v.department||'')===g);
+    const list = state.vehicles.filter(v=>normalizedVehicleDept(v)===g);
     if(list.length===0) return;
+    list.forEach(v=>shown.add(v.id));
     const header = document.createElement('div');
     header.className='veh-group-header';
     header.textContent = g || '未設定';
     el.appendChild(header);
     list.forEach(v=> renderVehicleRow(v, el));
   });
+  // 上記のどのグループにも当てはまらなかった車両（想定外の値）も、念のためすべて表示する
+  const rest = state.vehicles.filter(v=>!shown.has(v.id));
+  if(rest.length>0){
+    const header = document.createElement('div');
+    header.className='veh-group-header';
+    header.textContent = 'その他';
+    el.appendChild(header);
+    rest.forEach(v=> renderVehicleRow(v, el));
+  }
 }
 function renderVehicleRow(v, el){
     const row = document.createElement('div');
@@ -1629,8 +1654,8 @@ function renderVehicleRow(v, el){
         '</div>'+
         '<div class="field-row">'+
           '<div class="field"><label>部門</label><select id="evDept">'+
-            '<option value=""'+(!v.department?' selected':'')+'>未設定</option>'+
-            ['美術部','装飾・小道具','個人'].map(t=>'<option'+(v.department===t?' selected':'')+'>'+t+'</option>').join('')+
+            '<option value=""'+(!normalizedVehicleDept(v)?' selected':'')+'>未設定</option>'+
+            ['美術','装飾・小道具','個人'].map(t=>'<option'+(normalizedVehicleDept(v)===t?' selected':'')+'>'+t+'</option>').join('')+
           '</select></div>'+
         '</div>'+
         '<div class="field"><label>識別カラー</label><div class="color-picker" id="evColorPicker"></div></div>'+
@@ -1736,16 +1761,26 @@ function renderPeopleList(){
     return;
   }
   el.innerHTML='';
-  const groups = ['美術部','装飾部','小道具',''];
+  const groups = ['美術','装飾','小道具',''];
+  const shown = new Set();
   groups.forEach(g=>{
-    const list = state.people.filter(p=>(p.department||'')===g);
+    const list = state.people.filter(p=>normalizedPersonDept(p)===g);
     if(list.length===0) return;
+    list.forEach(p=>shown.add(p.id));
     const header = document.createElement('div');
     header.className='veh-group-header';
     header.textContent = g || '未設定';
     el.appendChild(header);
     list.forEach(p=> renderPersonRow(p, el));
   });
+  const rest = state.people.filter(p=>!shown.has(p.id));
+  if(rest.length>0){
+    const header = document.createElement('div');
+    header.className='veh-group-header';
+    header.textContent = 'その他';
+    el.appendChild(header);
+    rest.forEach(p=> renderPersonRow(p, el));
+  }
 }
 function renderPersonRow(p, el){
     const row = document.createElement('div');
@@ -1762,8 +1797,8 @@ function renderPersonRow(p, el){
         '</div>'+
         '<div class="field-row">'+
           '<div class="field"><label>部門</label><select id="epDept">'+
-            '<option value=""'+(!p.department?' selected':'')+'>未設定</option>'+
-            ['美術部','装飾部','小道具'].map(t=>'<option'+(p.department===t?' selected':'')+'>'+t+'</option>').join('')+
+            '<option value=""'+(!normalizedPersonDept(p)?' selected':'')+'>未設定</option>'+
+            ['美術','装飾','小道具'].map(t=>'<option'+(normalizedPersonDept(p)===t?' selected':'')+'>'+t+'</option>').join('')+
           '</select></div>'+
         '</div>'+
         '<div class="veh-edit-actions">'+
